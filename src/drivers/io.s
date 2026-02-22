@@ -1,0 +1,20 @@
+.global outb
+.global inb
+.global io_wait
+
+outb:
+    mov 8(%esp), %al
+    mov 4(%esp), %dx
+    out %al, %dx
+    ret
+
+inb:
+    mov 4(%esp), %dx
+    in %dx, %al
+    ret
+
+io_wait:
+    xor %eax, %eax
+    mov $0x80, %dx
+    out %al, %dx
+    ret
