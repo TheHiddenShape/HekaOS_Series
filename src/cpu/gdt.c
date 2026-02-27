@@ -66,7 +66,7 @@ gdt_get_base_address (void)
 void
 klog_gdt_info (void)
 {
-    pr_info ("=== GDT Information ===\n");
+    pr_info ("#### GDT Information ####\n");
     pr_info ("GDT Base Address: %p\n", (void *)&gdt);
     pr_info ("Expected Address: 0x800\n");
     pr_info ("GDT Entries:      %d\n", GDT_ENTRIES);

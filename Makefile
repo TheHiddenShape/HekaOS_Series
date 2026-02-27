@@ -31,7 +31,7 @@ BOOT_OBJS = $(OBJ_DIR)/boot.o
 
 CPU_OBJS = $(OBJ_DIR)/gdt.o $(OBJ_DIR)/gdt_flush.o $(OBJ_DIR)/idt.o $(OBJ_DIR)/idt_load.o \
            $(OBJ_DIR)/isr.o $(OBJ_DIR)/isr_stubs.o $(OBJ_DIR)/interrupts.o \
-           $(OBJ_DIR)/rdtsc.o
+           $(OBJ_DIR)/rdtsc.o $(OBJ_DIR)/paging.o $(OBJ_DIR)/paging_stubs.o
 
 DRIVERS_OBJS = $(OBJ_DIR)/io.o $(OBJ_DIR)/pic.o
 

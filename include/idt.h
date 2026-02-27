@@ -25,6 +25,7 @@ struct idt_ptr
 
 // CPU exceptions
 extern void isr13 (void); // general Protection Fault
+extern void isr14 (void); // page Fault
 
 // hardware interrupts (IRQs)
 extern void irq1 (void);  // keyboard (IRQ 1)

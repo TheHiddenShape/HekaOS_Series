@@ -16,6 +16,7 @@ isr\num:
 .endm
 
 ISR_ERRCODE   13
+ISR_ERRCODE   14
 
 .macro IRQ num, irq_num
 .global irq\num
@@ -40,7 +41,11 @@ isr_common_stub:
     mov %ax, %fs
     mov %ax, %gs
 
+    # int_no at 36(%esp), err_code at 40(%esp)
+    push 40(%esp)      # err_code
+    push 40(%esp)      # int_no (offset shifted by previous push)
     call isr_handler
+    add $8, %esp
 
     pop %eax
     mov %ax, %ds

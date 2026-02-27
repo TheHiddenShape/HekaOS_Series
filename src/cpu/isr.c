@@ -1,22 +1,38 @@
 #include "../include/interrupts.h"
 #include "../include/io.h"
+#include "../include/paging.h"
 #include "../include/pic.h"
+#include "../include/printk.h"
 #include <stdint.h>
 
 extern void shell_add_char (char c);
 
-const char *exception_messages[] = { "General Protection Fault",
+static const char *exception_names[] = {
+    [13] = "General Protection Fault",
+    [14] = "Page Fault",
 };
 
 void
-isr_handler (void)
+isr_handler (uint32_t int_no, uint32_t err_code)
 {
-    // for now, just halt the system
-    // todo: Later add proper exception handling
+    const char *name = "Unknown Exception";
+    if (int_no < sizeof (exception_names) / sizeof (exception_names[0])
+        && exception_names[int_no])
+    {
+        name = exception_names[int_no];
+    }
+
+    pr_err ("EXCEPTION: %s (int %d, err=0x%x)\n", name, int_no, err_code);
+
+    if (int_no == 14)
+    {
+        pr_err ("  CR2 (faulting address)=0x%x\n", read_cr2 ());
+    }
+
     disable_interrupts_and_halt ();
 }
 
-// Scancode to ASCII table (US QWERTY, lowercase)
+// scancode to ASCII table (US QWERTY, lowercase)
 static const char scancode_to_ascii[128]
     = { 0,   27,   '1',  '2', '3',  '4', '5', '6', '7', '8', '9', '0', '-',
         '=', '\b', '\t', 'q', 'w',  'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',

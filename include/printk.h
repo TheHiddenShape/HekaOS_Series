@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+int printk (const char *format, ...);
+
 #define LOG_BUF_SIZE 4096
 
 // log levels (linux-compatible)

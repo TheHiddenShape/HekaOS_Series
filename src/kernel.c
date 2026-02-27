@@ -3,6 +3,7 @@
 #include "../include/interrupts.h"
 #include "../include/io.h"
 #include "../include/klib.h"
+#include "../include/paging.h"
 #include "../include/pic.h"
 #include "../include/printk.h"
 #include <stdbool.h>
@@ -289,7 +290,7 @@ kprint_stack_info (void)
     uint32_t stack_used = stack_top_addr - esp;
     uint32_t stack_free = esp - stack_bottom_addr;
 
-    pr_info ("=== Kernel Stack ===\n");
+    pr_info ("#### Kernel Stack ####\n");
     pr_info ("Stack Top:        %p\n", (void *)stack_top_addr);
     pr_info ("Stack Bottom:     %p\n", (void *)stack_bottom_addr);
     pr_info ("Stack Size:       %d bytes (%d KB)\n", stack_size,
@@ -351,6 +352,8 @@ kernel_main (void)
     gdt_init ();
     pic_remap ();
     idt_init ();
+    paging_init ();
+    paging_test ();
 
     print_banner ();
 

@@ -1,4 +1,8 @@
-# Declare constants for the multiboot header.
+.global stack_bottom
+.global stack_top
+.global _start
+
+# declare constants for the multiboot header.
 .set ALIGN,    1<<0
 .set MEMINFO,  1<<1
 .set FLAGS,    ALIGN | MEMINFO
@@ -18,14 +22,11 @@
 
 .section .bss
 .align 16
-.global stack_bottom
 stack_bottom:
 .skip 16384 # 16 KiB
-.global stack_top
 stack_top:
 
 .section .text
-.global _start
 .type _start, @function
 _start:
 	mov $stack_top, %esp
