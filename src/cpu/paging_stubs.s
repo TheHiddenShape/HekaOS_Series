@@ -1,3 +1,4 @@
+.text
 .global load_page_directory
 .global enable_paging
 .global read_cr0
@@ -38,4 +39,16 @@ read_cr2:
 
 read_cr3:
     mov %cr3, %eax
+    ret
+
+# invlpg: invalidates a single TLB entry for the page containing the given virtual address
+
+.global flush_tlb
+flush_tlb:
+    push %ebp
+    mov %esp, %ebp
+    mov 8(%esp), %eax
+    invlpg (%eax)
+    mov %ebp, %esp
+    pop %ebp
     ret

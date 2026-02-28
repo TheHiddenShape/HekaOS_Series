@@ -1,28 +1,115 @@
 #include "../include/paging.h"
 #include "../include/printk.h"
 
-uint32_t page_directory[1024] __attribute__ ((aligned (4096)));
-uint32_t first_page_table[1024] __attribute__ ((aligned (4096)));
+uint32_t page_directory[PD_ENTRIES] __attribute__ ((aligned (PAGE_SIZE)));
+uint32_t first_page_table[PT_ENTRIES] __attribute__ ((aligned (PAGE_SIZE)));
+
+static uint32_t pt_pool[PT_POOL_SIZE][PT_POOL_ENTRIES] __attribute__ ((aligned (PAGE_SIZE)));
+static uint32_t pt_pool_next = 0;
 
 void
 paging_init (void)
 {
     uint32_t i;
 
-    for (i = 0; i < 1024; i++)
+    for (i = 0; i < PD_ENTRIES; i++)
     {
-        page_directory[i] = 0x00000002;
-    }
-    for (i = 0; i < 1024; i++)
-    {
-        first_page_table[i] = (i * 0x1000) | 3;
+        page_directory[i] = PAGE_RW; // non-present, r/w pre-configured
     }
 
-    page_directory[0] = ((uint32_t)first_page_table) | 3;
+    // identity mapping
+    for (i = 0; i < PT_ENTRIES; i++)
+    {
+        first_page_table[i] = (i * PAGE_SIZE) | (PAGE_PRESENT | PAGE_RW); /* 0b11, bit 0 present, bit 1 r/w, this is the base address of a frame, offset of
+        The offset in the virtual address for physics will help us point to the right mem area */
+    } 
+
+    page_directory[0] = ((uint32_t)first_page_table) | (PAGE_PRESENT | PAGE_RW);
     load_page_directory ((uint32_t *)page_directory);
     enable_paging ();
     pr_info ("Paging enabled (identity mapped first 4 MiB)\n");
     printk("\n");
+}
+
+void *get_physaddr(void *virtualaddr)
+{
+    unsigned long pdindex = (unsigned long)virtualaddr >> 22;
+    unsigned long ptindex = (unsigned long)virtualaddr >> 12 & 0x03FF;
+
+    unsigned long *pd = (unsigned long *)0xFFFFF000;
+    if (!(pd[pdindex] & 0x01))
+    {
+        return (void *)0;
+    }
+
+    unsigned long *pt = ((unsigned long *)0xFFC00000) + (0x400 * pdindex);
+    if (!(pt[ptindex] & 0x01))
+    {
+        return (void *)0;
+    }
+
+    return (void *)((pt[ptindex] & ~0xFFF) + ((unsigned long)virtualaddr & 0xFFF));
+}
+
+void map_page(void *physaddr, void *virtualaddr, unsigned int flags)
+{
+    if (((unsigned long)physaddr & 0xFFF) || ((unsigned long)virtualaddr & 0xFFF))
+    {
+        return;
+    }
+
+    unsigned long pdindex = (unsigned long)virtualaddr >> 22;
+    unsigned long ptindex = (unsigned long)virtualaddr >> 12 & 0x03FF;
+    unsigned long *pd = (unsigned long *)0xFFFFF000;
+
+    if (!(pd[pdindex] & 0x01))
+    {
+        if (pt_pool_next >= PT_POOL_SIZE)
+        {
+            return;
+        }
+        uint32_t *new_pt = pt_pool[pt_pool_next++];
+        for (int i = 0; i < PT_ENTRIES; i++)
+        {
+            new_pt[i] = 0;
+        }
+        pd[pdindex] = ((unsigned long)new_pt) | (PAGE_PRESENT | PAGE_RW);
+    }
+
+    unsigned long *pt = ((unsigned long *)0xFFC00000) + (0x400 * pdindex);
+    if (pt[ptindex] & 0x01)
+    {
+        pt[ptindex] = 0;
+    }
+
+    pt[ptindex] = ((unsigned long)physaddr) | (flags & 0xFFF) | 0x01;
+    flush_tlb ((unsigned long)virtualaddr);
+}
+
+void unmap_page(void *virtualaddr)
+{
+    if ((unsigned long)virtualaddr & 0xFFF)
+    {
+        return;
+    }
+
+    unsigned long pdindex = (unsigned long)virtualaddr >> 22;
+    unsigned long ptindex = (unsigned long)virtualaddr >> 12 & 0x03FF;
+
+    unsigned long *pd = (unsigned long *)0xFFFFF000;
+    if (!(pd[pdindex] & 0x01))
+    {
+        return;
+    }
+
+    unsigned long *pt = ((unsigned long *)0xFFC00000) + (0x400 * pdindex);
+    if (!(pt[ptindex] & 0x01))
+    {
+        return;
+    }
+
+    pt[ptindex] = 0;
+    flush_tlb ((unsigned long)virtualaddr);
 }
 
 void
