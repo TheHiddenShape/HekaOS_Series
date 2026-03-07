@@ -22,6 +22,10 @@ https://wiki.osdev.org/Setting_Up_Paging
 #define PD_ENTRIES 1024
 #define PT_ENTRIES 1024
 
+// Recursive mapping addresses
+#define RECURSIVE_PT_BASE   0xFFC00000
+#define RECURSIVE_PD_BASE   0xFFFFF000
+
 #define PT_POOL_SIZE 16
 #define PT_POOL_ENTRIES PT_ENTRIES
 
