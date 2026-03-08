@@ -1,5 +1,7 @@
-#include "../../include/klib.h"
-#include "../../include/printk.h"
+#include "klib.h"
+#include "printk.h"
+
+#define LOG_BUF_SIZE 4096
 
 static char log_buf[LOG_BUF_SIZE];
 static size_t log_write_idx = 0;

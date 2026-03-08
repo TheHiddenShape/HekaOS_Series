@@ -1,6 +1,6 @@
 #include "printk.h"
-#include "../include/gdt.h"
-#include "../include/klib.h"
+#include "gdt.h"
+#include "klib.h"
 
 #define GDT_ENTRIES 7
 

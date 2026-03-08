@@ -2,6 +2,15 @@
 #include "printk.h"
 #include "kpanic.h"
 
+// Total physical memory managed (64 MiB)
+#define PHYS_MEM_SIZE        0x04000000
+// Physical memory managed starts after identity-mapped region (4 MiB)
+#define PHYS_REGION_START    0x00400000
+#define PHYS_FRAME_SIZE      4096
+#define PHYS_TOTAL_FRAMES    (PHYS_MEM_SIZE / PHYS_FRAME_SIZE)
+// Number of frames available in the managed region
+#define PHYS_REGION_FRAMES   ((PHYS_MEM_SIZE - PHYS_REGION_START) / PHYS_FRAME_SIZE)
+
 // Bitmap: 1 bit per frame. 0 = free, 1 = used. PHYS_TOTAL_FRAMES / 32 gives the number of uint32_t words needed.
 
 #define BITMAP_SIZE (PHYS_TOTAL_FRAMES / 32)

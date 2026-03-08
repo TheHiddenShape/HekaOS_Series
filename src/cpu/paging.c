@@ -1,7 +1,14 @@
-#include "../include/paging.h"
-#include "../include/phys_page_frame.h"
-#include "../include/printk.h"
-#include "../include/kpanic.h"
+#include "paging.h"
+#include "phys_page_frame.h"
+#include "printk.h"
+#include "kpanic.h"
+
+#define PD_ENTRIES      1024
+#define PT_ENTRIES      1024
+#define RECURSIVE_PT_BASE   0xFFC00000
+#define RECURSIVE_PD_BASE   0xFFFFF000
+#define PT_POOL_SIZE    16
+#define PT_POOL_ENTRIES PT_ENTRIES
 
 uint32_t page_directory[PD_ENTRIES] __attribute__ ((aligned (PAGE_SIZE)));
 uint32_t first_page_table[PT_ENTRIES] __attribute__ ((aligned (PAGE_SIZE)));

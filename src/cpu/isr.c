@@ -1,8 +1,8 @@
-#include "../include/interrupts.h"
-#include "../include/io.h"
-#include "../include/paging.h"
-#include "../include/pic.h"
-#include "../include/printk.h"
+#include "interrupts.h"
+#include "io.h"
+#include "paging.h"
+#include "pic.h"
+#include "printk.h"
 #include <stdint.h>
 
 extern void shell_add_char (char c);

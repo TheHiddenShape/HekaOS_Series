@@ -5,8 +5,6 @@
 
 int printk (const char *format, ...);
 
-#define LOG_BUF_SIZE 4096
-
 // log levels (linux-compatible)
 #define KERN_EMERG   "<0>" // system is unusable
 #define KERN_ALERT   "<1>" // action must be taken immediately

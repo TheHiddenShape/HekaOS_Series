@@ -1,12 +1,13 @@
-#include "../include/gdt.h"
-#include "../include/idt.h"
-#include "../include/interrupts.h"
-#include "../include/io.h"
-#include "../include/klib.h"
-#include "../include/paging.h"
-#include "../include/phys_page_frame.h"
-#include "../include/pic.h"
-#include "../include/printk.h"
+#include "gdt.h"
+#include "idt.h"
+#include "interrupts.h"
+#include "io.h"
+#include "klib.h"
+#include "paging.h"
+#include "kmalloc.h"
+#include "phys_page_frame.h"
+#include "pic.h"
+#include "printk.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -239,7 +240,6 @@ shell_help (void)
     terminal_writestring ("  reboot   - Reboot the system\n");
     terminal_writestring ("  shutdown - Power off the system (ACPI)\n");
     terminal_writestring ("  halt     - Halt the CPU\n");
-    terminal_writestring ("  mmtest   - Run memory management tests\n");
 }
 
 void
@@ -264,11 +264,6 @@ shell_execute (const char *cmd)
     else if (strcmp (cmd, "dmesg") == 0)
     {
         dmesg ();
-    }
-    else if (strcmp (cmd, "mmtest") == 0)
-    {
-        phys_mem_test ();
-        paging_test ();
     }
     else if (cmd[0] != '\0')
     {
@@ -384,6 +379,8 @@ kernel_main (void)
     phys_mem_init ();
     phys_mem_test ();
     paging_test ();
+    heap_init ();
+    kmalloc_test ();
 
     print_banner ();
 

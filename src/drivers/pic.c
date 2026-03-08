@@ -1,4 +1,4 @@
-#include "../include/io.h"
+#include "io.h"
 #include <stdint.h>
 
 /* PIC ports, each chip (master and slave) has a command port and a data port.
