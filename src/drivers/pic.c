@@ -41,7 +41,7 @@ pic_remap (void)
     // ICW3 cascade topology configuration:
     outb (PIC1_DATA, 4);
     io_wait ();
-    
+
     // tell slave PIC its cascade identity
     outb (PIC2_DATA, 2);
     io_wait ();

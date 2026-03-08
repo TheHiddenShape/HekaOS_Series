@@ -28,7 +28,7 @@ extern void isr13 (void); // general Protection Fault
 extern void isr14 (void); // page Fault
 
 // hardware interrupts (IRQs)
-extern void irq1 (void);  // keyboard (IRQ 1)
+extern void irq1 (void); // keyboard (IRQ 1)
 
 void idt_init (void);
 void idt_set_gate (uint8_t num, uint32_t base, uint16_t selector,

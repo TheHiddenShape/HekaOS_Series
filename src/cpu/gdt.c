@@ -1,6 +1,6 @@
-#include "printk.h"
 #include "gdt.h"
 #include "klib.h"
+#include "printk.h"
 
 #define GDT_ENTRIES 7
 
@@ -16,12 +16,12 @@ gdt_set_gate (int num, uint32_t base, uint32_t limit, uint8_t access,
 {
     if (limit > 0xFFFFF)
     {
-        pr_err("GDT: limit > 0xFFFFF is forbidden\n");
+        pr_err ("GDT: limit > 0xFFFFF is forbidden\n");
     }
 
-    gdt[num].base_low = (base & 0xFFFF); // 16 lows bits
+    gdt[num].base_low = (base & 0xFFFF);        // 16 lows bits
     gdt[num].base_middle = (base >> 16) & 0xFF; // bits 16-23
-    gdt[num].base_high = (base >> 24) & 0xFF; // 24-31 high bits
+    gdt[num].base_high = (base >> 24) & 0xFF;   // 24-31 high bits
 
     gdt[num].limit_low = (limit & 0xFFFF); // 16 lows bits
 
@@ -71,7 +71,7 @@ klog_gdt_info (void)
     pr_info ("Expected Address: 0x800\n");
     pr_info ("GDT Entries:      %d\n", GDT_ENTRIES);
     pr_info ("GDT Size:         %d bytes\n",
-            (int)(sizeof (struct gdt_entry) * GDT_ENTRIES));
+             (int)(sizeof (struct gdt_entry) * GDT_ENTRIES));
 
     if ((uint32_t)&gdt == 0x800)
     {

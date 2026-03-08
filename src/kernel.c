@@ -3,8 +3,8 @@
 #include "interrupts.h"
 #include "io.h"
 #include "klib.h"
-#include "paging.h"
 #include "kmalloc.h"
+#include "paging.h"
 #include "phys_page_frame.h"
 #include "pic.h"
 #include "printk.h"
@@ -317,7 +317,7 @@ kprint_stack_info (void)
     pr_info ("Stack Top:        %p\n", (void *)stack_top_addr);
     pr_info ("Stack Bottom:     %p\n", (void *)stack_bottom_addr);
     pr_info ("Stack Size:       %d bytes (%d KB)\n", stack_size,
-            stack_size / 1024);
+             stack_size / 1024);
     pr_info ("Current ESP:      %p\n", (void *)esp);
     pr_info ("Used:             %d bytes\n", stack_used);
     pr_info ("Free:             %d bytes\n", stack_free);
@@ -387,7 +387,7 @@ kernel_main (void)
     kprint_stack_info ();
     klog_gdt_info ();
 
-    pr_info("HekaOS v0.1.0 initialized\n");
+    pr_info ("HekaOS v0.1.0 initialized\n");
 
     terminal_writestring ("Welcome to HekaOS, type help to get started !\n\n");
     shell_print_prompt ();

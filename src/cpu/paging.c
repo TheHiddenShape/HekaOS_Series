@@ -1,19 +1,20 @@
 #include "paging.h"
+#include "kpanic.h"
 #include "phys_page_frame.h"
 #include "printk.h"
-#include "kpanic.h"
 
-#define PD_ENTRIES      1024
-#define PT_ENTRIES      1024
-#define RECURSIVE_PT_BASE   0xFFC00000
-#define RECURSIVE_PD_BASE   0xFFFFF000
-#define PT_POOL_SIZE    16
+#define PD_ENTRIES 1024
+#define PT_ENTRIES 1024
+#define RECURSIVE_PT_BASE 0xFFC00000
+#define RECURSIVE_PD_BASE 0xFFFFF000
+#define PT_POOL_SIZE 16
 #define PT_POOL_ENTRIES PT_ENTRIES
 
 uint32_t page_directory[PD_ENTRIES] __attribute__ ((aligned (PAGE_SIZE)));
 uint32_t first_page_table[PT_ENTRIES] __attribute__ ((aligned (PAGE_SIZE)));
 
-static uint32_t pt_pool[PT_POOL_SIZE][PT_POOL_ENTRIES] __attribute__ ((aligned (PAGE_SIZE)));
+static uint32_t pt_pool[PT_POOL_SIZE][PT_POOL_ENTRIES]
+    __attribute__ ((aligned (PAGE_SIZE)));
 static uint32_t pt_pool_next = 0;
 
 static inline uint32_t *
@@ -35,22 +36,27 @@ paging_init (void)
     // identity mapping
     for (i = 0; i < PT_ENTRIES; i++)
     {
-        first_page_table[i] = (i * PAGE_SIZE) | (PAGE_PRESENT | PAGE_RW); /* 0b11, bit 0 present, bit 1 r/w, this is the base address of a frame, offset of
-        The offset in the virtual address for physics will help us point to the right mem area */
-    } 
+        first_page_table[i]
+            = (i * PAGE_SIZE) | (PAGE_PRESENT | PAGE_RW); /* 0b11, bit 0
+present, bit 1 r/w, this is the base address of a frame, offset of The offset in
+the virtual address for physics will help us point to the right mem area */
+    }
 
     page_directory[0] = ((uint32_t)first_page_table) | (PAGE_PRESENT | PAGE_RW);
     /* recursive mapping: PD[1023] -> PD itself, so the MMU traverses
        CR3 -> PD[1023] -> PD (as PT) -> PD[1023] -> phys addr of PD
-       this maps the PD at RECURSIVE_PD_BASE and all PTs at RECURSIVE_PT_BASE+ */
-    page_directory[1023] = ((uint32_t)page_directory) | (PAGE_PRESENT | PAGE_RW);
+       this maps the PD at RECURSIVE_PD_BASE and all PTs at RECURSIVE_PT_BASE+
+     */
+    page_directory[1023]
+        = ((uint32_t)page_directory) | (PAGE_PRESENT | PAGE_RW);
     load_page_directory ((uint32_t *)page_directory);
     enable_paging ();
     pr_info ("Paging enabled (identity mapped first 4 MiB)\n");
-    printk("\n");
+    printk ("\n");
 }
 
-void *get_physaddr(void *virtualaddr)
+void *
+get_physaddr (void *virtualaddr)
 {
     uint32_t pdindex = (uint32_t)virtualaddr >> 22;
     uint32_t ptindex = (uint32_t)virtualaddr >> 12 & 0x03FF;
@@ -70,7 +76,8 @@ void *get_physaddr(void *virtualaddr)
     return (void *)((pt[ptindex] & ~0xFFF) + ((uint32_t)virtualaddr & 0xFFF));
 }
 
-void map_page(void *physaddr, void *virtualaddr, uint32_t flags)
+void
+map_page (void *physaddr, void *virtualaddr, uint32_t flags)
 {
     if (((uint32_t)physaddr & 0xFFF) || ((uint32_t)virtualaddr & 0xFFF))
     {
@@ -105,7 +112,8 @@ void map_page(void *physaddr, void *virtualaddr, uint32_t flags)
     flush_tlb ((uint32_t)virtualaddr);
 }
 
-void unmap_page(void *virtualaddr)
+void
+unmap_page (void *virtualaddr)
 {
     if ((uint32_t)virtualaddr & 0xFFF)
     {
@@ -246,8 +254,8 @@ paging_test (void)
 
             if (resolved == paddr)
             {
-                pr_info ("Map round-trip: 0x%x -> 0x%x\n",
-                         (uint32_t)vaddr, (uint32_t)paddr);
+                pr_info ("Map round-trip: 0x%x -> 0x%x\n", (uint32_t)vaddr,
+                         (uint32_t)paddr);
             }
             else
             {
@@ -269,8 +277,7 @@ paging_test (void)
             void *after = get_physaddr (vaddr);
             if (after == (void *)0)
             {
-                pr_info ("Unmap: mapping removed at 0x%x\n",
-                         (uint32_t)vaddr);
+                pr_info ("Unmap: mapping removed at 0x%x\n", (uint32_t)vaddr);
             }
             else
             {
@@ -315,8 +322,8 @@ paging_test (void)
         uint32_t free_during = phys_free_count ();
         if (free_during == free_before - 1)
         {
-            pr_info ("alloc_page: consumed one frame (%d -> %d)\n",
-                     free_before, free_during);
+            pr_info ("alloc_page: consumed one frame (%d -> %d)\n", free_before,
+                     free_during);
         }
         else
         {
@@ -350,8 +357,7 @@ paging_test (void)
         void *phys_after = get_physaddr (vaddr);
         if (phys_after == (void *)0)
         {
-            pr_info ("free_page: mapping removed at 0x%x\n",
-                     (uint32_t)vaddr);
+            pr_info ("free_page: mapping removed at 0x%x\n", (uint32_t)vaddr);
         }
         else
         {
@@ -395,9 +401,9 @@ paging_test (void)
         *(volatile uint32_t *)v2 = 0xBBBBBBBB;
         *(volatile uint32_t *)v3 = 0xCCCCCCCC;
 
-        if (*(volatile uint32_t *)v1 == 0xAAAAAAAA &&
-            *(volatile uint32_t *)v2 == 0xBBBBBBBB &&
-            *(volatile uint32_t *)v3 == 0xCCCCCCCC)
+        if (*(volatile uint32_t *)v1 == 0xAAAAAAAA
+            && *(volatile uint32_t *)v2 == 0xBBBBBBBB
+            && *(volatile uint32_t *)v3 == 0xCCCCCCCC)
         {
             pr_info ("Multi-alloc: no cross-talk between pages\n");
         }

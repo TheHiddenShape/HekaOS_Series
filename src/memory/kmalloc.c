@@ -9,26 +9,28 @@
 #define ALIGN8(sz) (((sz) + 7) & ~(uint32_t)7)
 
 // minimum viable split remainder: header + 8 bytes of usable data
-#define BLOCK_MIN (sizeof(kblock_t) + 8)
+#define BLOCK_MIN (sizeof (kblock_t) + 8)
 
 typedef struct kblock
 {
-    uint32_t      size;
-    uint32_t      used;
+    uint32_t size;
+    uint32_t used;
     struct kblock *next;
     struct kblock *prev;
 } kblock_t;
 
 static kblock_t *heap_head = NULL;
-static uint8_t  *heap_end  = (uint8_t *)KHEAP_VIRT_BASE;
+static uint8_t *heap_end = (uint8_t *)KHEAP_VIRT_BASE;
 
-/* heap_grow – map enough pages to hold at least nbytes of usable heap space, then append (or extend) a free block at the tail. nbytes == 0 is valid and requests a single initial page.*/
+/* heap_grow – map enough pages to hold at least nbytes of usable heap space,
+ * then append (or extend) a free block at the tail. nbytes == 0 is valid and
+ * requests a single initial page.*/
 static void
 heap_grow (uint32_t nbytes)
 {
     /* pages >= (nbytes + sizeof(kblock_t) + PAGE_SIZE - 1) / PAGE_SIZE */
-    uint32_t pages = (nbytes + (uint32_t)sizeof (kblock_t) + PAGE_SIZE - 1)
-                     / PAGE_SIZE;
+    uint32_t pages
+        = (nbytes + (uint32_t)sizeof (kblock_t) + PAGE_SIZE - 1) / PAGE_SIZE;
     if (!pages)
     {
         pages = 1;
@@ -53,14 +55,15 @@ heap_grow (uint32_t nbytes)
 
     // Walk to the last block
     kblock_t *last = NULL;
-    kblock_t *cur  = heap_head;
+    kblock_t *cur = heap_head;
     while (cur)
     {
         last = cur;
-        cur  = cur->next;
+        cur = cur->next;
     }
 
-    /* If the last block is free and sits right at heap_end, just grow it instead of creating a new header (avoids fragmentation at boundaries).*/
+    /* If the last block is free and sits right at heap_end, just grow it
+     * instead of creating a new header (avoids fragmentation at boundaries).*/
     if (last && !last->used
         && ((uint8_t *)last + sizeof (kblock_t) + last->size == heap_end))
     {
@@ -69,10 +72,10 @@ heap_grow (uint32_t nbytes)
     else
     {
         kblock_t *blk = (kblock_t *)heap_end;
-        blk->size     = total - (uint32_t)sizeof (kblock_t);
-        blk->used     = 0;
-        blk->next     = NULL;
-        blk->prev     = last;
+        blk->size = total - (uint32_t)sizeof (kblock_t);
+        blk->used = 0;
+        blk->next = NULL;
+        blk->prev = last;
         if (last)
         {
             last->next = blk;
@@ -90,14 +93,15 @@ void
 heap_init (void)
 {
     heap_head = NULL;
-    heap_end  = (uint8_t *)KHEAP_VIRT_BASE;
+    heap_end = (uint8_t *)KHEAP_VIRT_BASE;
     heap_grow (0); // map first page and prime the free list
-    pr_info ("Heap initialized: base=0x%x end=0x%x\n",
-             KHEAP_VIRT_BASE, (uint32_t)heap_end);
+    pr_info ("Heap initialized: base=0x%x end=0x%x\n", KHEAP_VIRT_BASE,
+             (uint32_t)heap_end);
     printk ("\n");
 }
 
-/* kbrk – extend the heap by at least nbytes. nbytes == 0 returns the current end without mapping anything. Returns the new heap_end. =*/
+/* kbrk – extend the heap by at least nbytes. nbytes == 0 returns the current
+ * end without mapping anything. Returns the new heap_end. =*/
 void *
 kbrk (uint32_t nbytes)
 {
@@ -109,7 +113,9 @@ kbrk (uint32_t nbytes)
     return heap_end;
 }
 
-/* kmalloc – first-fit allocator. Alignment: all returned pointers are 8-byte aligned (ALIGN8 on size, and KHEAP_VIRT_BASE is page-aligned so headers are naturally 8-aligned).*/
+/* kmalloc – first-fit allocator. Alignment: all returned pointers are 8-byte
+ * aligned (ALIGN8 on size, and KHEAP_VIRT_BASE is page-aligned so headers are
+ * naturally 8-aligned).*/
 void *
 kmalloc (size_t size)
 {
@@ -153,7 +159,8 @@ kmalloc (size_t size)
     // Split if the leftover is large enough to form its own block
     if (blk->size >= size + BLOCK_MIN)
     {
-        kblock_t *split = (kblock_t *)((uint8_t *)blk + sizeof (kblock_t) + size);
+        kblock_t *split
+            = (kblock_t *)((uint8_t *)blk + sizeof (kblock_t) + size);
         split->size = blk->size - size - (uint32_t)sizeof (kblock_t);
         split->used = 0;
         split->next = blk->next;
@@ -170,7 +177,8 @@ kmalloc (size_t size)
     return (uint8_t *)blk + sizeof (kblock_t);
 }
 
-/*kfree – return a block to the free list and coalesce with adjacent free neighbours (both directions).*/
+/*kfree – return a block to the free list and coalesce with adjacent free
+ * neighbours (both directions).*/
 void
 kfree (void *ptr)
 {
@@ -192,8 +200,8 @@ kfree (void *ptr)
     if (blk->next && !blk->next->used)
     {
         kblock_t *nxt = blk->next;
-        blk->size    += (uint32_t)sizeof (kblock_t) + nxt->size;
-        blk->next     = nxt->next;
+        blk->size += (uint32_t)sizeof (kblock_t) + nxt->size;
+        blk->next = nxt->next;
         if (nxt->next)
         {
             nxt->next->prev = blk;
@@ -204,8 +212,8 @@ kfree (void *ptr)
     if (blk->prev && !blk->prev->used)
     {
         kblock_t *prv = blk->prev;
-        prv->size    += (uint32_t)sizeof (kblock_t) + blk->size;
-        prv->next     = blk->next;
+        prv->size += (uint32_t)sizeof (kblock_t) + blk->size;
+        prv->next = blk->next;
         if (blk->next)
         {
             blk->next->prev = prv;
@@ -293,7 +301,8 @@ kmalloc_test (void)
         kfree (NULL);
         pr_info ("kmalloc: kfree(NULL) is no-op\n");
 
-        /* 6. Coalesce + large alloc: After freeing everything, a single contiguous block should be able to satisfy a larger request. */
+        /* 6. Coalesce + large alloc: After freeing everything, a single
+         * contiguous block should be able to satisfy a larger request. */
         kfree (p4);
         kfree (p2);
         kfree (p3);

@@ -6,14 +6,14 @@
 
 /* Kernel heap lives in the top 1 GiB, below the recursive-PT window */
 #define KHEAP_VIRT_BASE 0xC0000000
-#define KHEAP_VIRT_MAX  0xFFBFFFFF
+#define KHEAP_VIRT_MAX 0xFFBFFFFF
 
-void   heap_init(void);
-void  *kmalloc(size_t size);
-void   kfree(void *ptr);
-void  *kbrk(uint32_t nbytes); /* nbytes=0 → query current end, else extend */
-size_t ksize(void *ptr);
+void heap_init (void);
+void *kmalloc (size_t size);
+void kfree (void *ptr);
+void *kbrk (uint32_t nbytes); /* nbytes=0 → query current end, else extend */
+size_t ksize (void *ptr);
 
-void kmalloc_test(void);
+void kmalloc_test (void);
 
 #endif

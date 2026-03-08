@@ -1,17 +1,19 @@
 #include "phys_page_frame.h"
-#include "printk.h"
 #include "kpanic.h"
+#include "printk.h"
 
 // Total physical memory managed (64 MiB)
-#define PHYS_MEM_SIZE        0x04000000
+#define PHYS_MEM_SIZE 0x04000000
 // Physical memory managed starts after identity-mapped region (4 MiB)
-#define PHYS_REGION_START    0x00400000
-#define PHYS_FRAME_SIZE      4096
-#define PHYS_TOTAL_FRAMES    (PHYS_MEM_SIZE / PHYS_FRAME_SIZE)
+#define PHYS_REGION_START 0x00400000
+#define PHYS_FRAME_SIZE 4096
+#define PHYS_TOTAL_FRAMES (PHYS_MEM_SIZE / PHYS_FRAME_SIZE)
 // Number of frames available in the managed region
-#define PHYS_REGION_FRAMES   ((PHYS_MEM_SIZE - PHYS_REGION_START) / PHYS_FRAME_SIZE)
+#define PHYS_REGION_FRAMES                                                     \
+    ((PHYS_MEM_SIZE - PHYS_REGION_START) / PHYS_FRAME_SIZE)
 
-// Bitmap: 1 bit per frame. 0 = free, 1 = used. PHYS_TOTAL_FRAMES / 32 gives the number of uint32_t words needed.
+// Bitmap: 1 bit per frame. 0 = free, 1 = used. PHYS_TOTAL_FRAMES / 32 gives the
+// number of uint32_t words needed.
 
 #define BITMAP_SIZE (PHYS_TOTAL_FRAMES / 32)
 
@@ -52,8 +54,8 @@ phys_mem_init (void)
         bitmap_clear (i);
     }
 
-    pr_info ("PMM initialized: %d frames free (%d KiB)\n",
-             PHYS_REGION_FRAMES, (PHYS_REGION_FRAMES * PHYS_FRAME_SIZE) / 1024);
+    pr_info ("PMM initialized: %d frames free (%d KiB)\n", PHYS_REGION_FRAMES,
+             (PHYS_REGION_FRAMES * PHYS_FRAME_SIZE) / 1024);
 }
 
 void *
@@ -98,7 +100,8 @@ phys_free_frame (void *frame)
     }
 
     uint32_t index = addr / PHYS_FRAME_SIZE;
-    if (index >= PHYS_TOTAL_FRAMES || index < (PHYS_REGION_START / PHYS_FRAME_SIZE))
+    if (index >= PHYS_TOTAL_FRAMES
+        || index < (PHYS_REGION_START / PHYS_FRAME_SIZE))
     {
         return; // out of range or reserved region
     }
@@ -133,8 +136,8 @@ phys_mem_test (void)
         uint32_t free = phys_free_count ();
         if (free == PHYS_REGION_FRAMES)
         {
-            pr_info ("PMM init: %d free frames (%d KiB)\n",
-                     free, (free * PHYS_FRAME_SIZE) / 1024);
+            pr_info ("PMM init: %d free frames (%d KiB)\n", free,
+                     (free * PHYS_FRAME_SIZE) / 1024);
         }
         else
         {
@@ -145,10 +148,10 @@ phys_mem_test (void)
     // alloc returns aligned, non-null, in-range address
     {
         void *frame = phys_alloc_frame ();
-        int ok = (frame != (void *)0) &&
-                 (((uint32_t)frame & (PHYS_FRAME_SIZE - 1)) == 0) &&
-                 ((uint32_t)frame >= PHYS_REGION_START) &&
-                 ((uint32_t)frame < PHYS_MEM_SIZE);
+        int ok = (frame != (void *)0)
+                 && (((uint32_t)frame & (PHYS_FRAME_SIZE - 1)) == 0)
+                 && ((uint32_t)frame >= PHYS_REGION_START)
+                 && ((uint32_t)frame < PHYS_MEM_SIZE);
         if (ok)
         {
             pr_info ("PMM alloc: valid frame at 0x%x\n", (uint32_t)frame);
@@ -170,8 +173,8 @@ phys_mem_test (void)
 
         if (during == before - 1 && after == before)
         {
-            pr_info ("PMM alloc/free: count %d -> %d -> %d\n",
-                     before, during, after);
+            pr_info ("PMM alloc/free: count %d -> %d -> %d\n", before, during,
+                     after);
         }
         else
         {
@@ -187,8 +190,8 @@ phys_mem_test (void)
 
         if (a != b && b != c && a != c)
         {
-            pr_info ("PMM alloc unique: 0x%x, 0x%x, 0x%x\n",
-                     (uint32_t)a, (uint32_t)b, (uint32_t)c);
+            pr_info ("PMM alloc unique: 0x%x, 0x%x, 0x%x\n", (uint32_t)a,
+                     (uint32_t)b, (uint32_t)c);
         }
         else
         {

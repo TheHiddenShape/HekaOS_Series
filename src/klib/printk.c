@@ -1,5 +1,5 @@
-#include "klib.h"
 #include "printk.h"
+#include "klib.h"
 
 #define LOG_BUF_SIZE 4096
 
@@ -119,60 +119,60 @@ printk (const char *format, ...)
             format++;
             switch (*format)
             {
-            case 's':
-            {
-                const char *str = va_arg (args, const char *);
-                if (str == NULL)
-                    str = "(null)";
-                print_string (str);
-                count += strlen (str);
-                break;
-            }
-            case 'd':
-            case 'i':
-            {
-                int val = va_arg (args, int);
-                print_int (val, 10, 1);
-                count++;
-                break;
-            }
-            case 'u':
-            {
-                uint32_t val = va_arg (args, uint32_t);
-                print_int (val, 10, 0);
-                count++;
-                break;
-            }
-            case 'x':
-            {
-                uint32_t val = va_arg (args, uint32_t);
-                print_hex (val);
-                count++;
-                break;
-            }
-            case 'p':
-            {
-                void *ptr = va_arg (args, void *);
-                print_hex ((uint32_t)ptr);
-                count++;
-                break;
-            }
-            case 'c':
-            {
-                char c = (char)va_arg (args, int);
-                printk_putchar (c);
-                count++;
-                break;
-            }
-            case '%':
-                printk_putchar ('%');
-                count++;
-                break;
-            default:
-                printk_putchar ('%');
-                printk_putchar (*format);
-                count += 2;
-                break;
+                case 's':
+                {
+                    const char *str = va_arg (args, const char *);
+                    if (str == NULL)
+                        str = "(null)";
+                    print_string (str);
+                    count += strlen (str);
+                    break;
+                }
+                case 'd':
+                case 'i':
+                {
+                    int val = va_arg (args, int);
+                    print_int (val, 10, 1);
+                    count++;
+                    break;
+                }
+                case 'u':
+                {
+                    uint32_t val = va_arg (args, uint32_t);
+                    print_int (val, 10, 0);
+                    count++;
+                    break;
+                }
+                case 'x':
+                {
+                    uint32_t val = va_arg (args, uint32_t);
+                    print_hex (val);
+                    count++;
+                    break;
+                }
+                case 'p':
+                {
+                    void *ptr = va_arg (args, void *);
+                    print_hex ((uint32_t)ptr);
+                    count++;
+                    break;
+                }
+                case 'c':
+                {
+                    char c = (char)va_arg (args, int);
+                    printk_putchar (c);
+                    count++;
+                    break;
+                }
+                case '%':
+                    printk_putchar ('%');
+                    count++;
+                    break;
+                default:
+                    printk_putchar ('%');
+                    printk_putchar (*format);
+                    count += 2;
+                    break;
             }
         }
         else
