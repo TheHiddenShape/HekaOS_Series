@@ -48,7 +48,7 @@ A bootable kernel loaded by GRUB, built on an assembly entry point, with a minim
 
 ### v0.2.0 - Memory
 
-A complete memory subsystem with pagination handling. Read/write rights on memory. User space and kernel space separation. Physical and virtual memory management. Kernel heap allocator (`kmalloc`, `kfree`, `ksize`, `kbrk`): returns virtual addresses backed by physically contiguous pages, operating on top of the paging layer. Kernel panic handling.
+A complete memory management system with pagination handling. R/W rights on memory. User space and kernel space separation. Physical and virtual memory management. Kernel heap allocator (kmalloc, kfree, ksize, kbrk): returns virtual addresses backed by physically contiguous pages, operating on top of the paging layer. Virtual memory allocator (vmalloc, vfree, vsize, vbrk): provides large, virtually contiguous allocations mapped across physically fragmented pages through page tables, suitable for large buffers where physical contiguity unavailable. Kernel panic handling.
 
 ### v0.3.0 - Interrupts
 
