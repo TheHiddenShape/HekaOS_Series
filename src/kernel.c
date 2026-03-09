@@ -4,11 +4,11 @@
 #include "io.h"
 #include "klib.h"
 #include "kmalloc.h"
-#include "vmalloc.h"
 #include "paging.h"
 #include "phys_page_frame.h"
 #include "pic.h"
 #include "printk.h"
+#include "vmalloc.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

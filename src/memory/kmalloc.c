@@ -114,7 +114,8 @@ kbrk (uint32_t nbytes)
 }
 
 // kmalloc – use for small, sub-page kernel objects (structs, buffers < 1 page).
-// For large or page-granularity allocations use vmalloc to avoid heap fragmentation.
+// For large or page-granularity allocations use vmalloc to avoid heap
+// fragmentation.
 /* first-fit allocator. Alignment: all returned pointers are 8-byte aligned
  * (ALIGN8 on size, and KHEAP_VIRT_BASE is page-aligned so headers are
  * naturally 8-aligned). */

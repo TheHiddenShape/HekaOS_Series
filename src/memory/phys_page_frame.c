@@ -275,10 +275,14 @@ phys_mem_test (void)
         {
             void *f = phys_alloc_frame ();
             if (!f)
+            {
                 break;
+            }
             allocated++;
             if (allocated > total + 1)
+            {
                 break;
+            }
         }
 
         if (allocated == total)

@@ -32,7 +32,9 @@ void
 vmalloc_init (void)
 {
     for (uint32_t i = 0; i < BITMAP_WORDS; i++)
+    {
         bitmap[i] = 0;
+    }
     pr_info ("vmalloc zone: 0x%x - 0x%x (%u pages)\n", VMALLOC_BASE,
              VMALLOC_MAX, (uint32_t)VMALLOC_PAGES);
     printk ("\n");
@@ -45,7 +47,9 @@ void *
 vmalloc (uint32_t npages)
 {
     if (!npages)
+    {
         return NULL;
+    }
 
     // first-fit: find a contiguous run of npages free pages
     uint32_t run = 0;
@@ -55,14 +59,18 @@ vmalloc (uint32_t npages)
         if (!bitmap_test (i))
         {
             if (!run)
+            {
                 start = i;
+            }
             if (++run == npages)
             {
                 for (uint32_t j = start; j < start + npages; j++)
                 {
                     void *vaddr = (void *)(VMALLOC_BASE + j * PAGE_SIZE);
                     if (!alloc_page (vaddr, PAGE_PRESENT | PAGE_RW))
+                    {
                         kpanic ("vmalloc: alloc_page failed");
+                    }
                     bitmap_set (j);
                 }
                 return (void *)(VMALLOC_BASE + start * PAGE_SIZE);
@@ -81,17 +89,23 @@ void
 vfree (void *ptr, uint32_t npages)
 {
     if (!ptr || !npages)
+    {
         return;
+    }
 
     uint32_t vaddr = (uint32_t)ptr;
     if (vaddr < VMALLOC_BASE || vaddr >= VMALLOC_MAX)
+    {
         kpanic ("vfree: pointer outside vmalloc zone");
+    }
 
     uint32_t idx = (vaddr - VMALLOC_BASE) / PAGE_SIZE;
     for (uint32_t i = 0; i < npages; i++)
     {
         if (!bitmap_test (idx + i))
+        {
             kpanic ("vfree: page not allocated");
+        }
         free_page ((void *)(VMALLOC_BASE + (idx + i) * PAGE_SIZE));
         bitmap_clear (idx + i);
     }
@@ -104,7 +118,9 @@ vbrk (void)
     for (uint32_t i = 0; i < VMALLOC_PAGES; i++)
     {
         if (!bitmap_test (i))
+        {
             return (void *)(VMALLOC_BASE + i * PAGE_SIZE);
+        }
     }
     return (void *)VMALLOC_MAX;
 }
@@ -125,10 +141,14 @@ vmalloc_test (void)
     {
         uint32_t *p = vmalloc (1);
         if (!p)
+        {
             kpanic ("vmalloc test: single-page alloc returned NULL");
+        }
         *p = 0xCAFEBABE;
         if (*p != 0xCAFEBABE)
+        {
             kpanic ("vmalloc test: write/read failed");
+        }
         pr_info ("vmalloc: 1-page alloc at 0x%x\n", (uint32_t)p);
         vfree (p, 1);
     }
@@ -137,11 +157,15 @@ vmalloc_test (void)
     {
         uint8_t *p = vmalloc (4);
         if (!p)
+        {
             kpanic ("vmalloc test: 4-page alloc returned NULL");
+        }
         p[0] = 0xAA;
         p[4 * PAGE_SIZE - 1] = 0xBB;
         if (p[0] != 0xAA || p[4 * PAGE_SIZE - 1] != 0xBB)
+        {
             kpanic ("vmalloc test: multi-page r/w failed");
+        }
         pr_info ("vmalloc: 4-page alloc at 0x%x\n", (uint32_t)p);
         vfree (p, 4);
     }
@@ -151,9 +175,13 @@ vmalloc_test (void)
         void *p1 = vmalloc (1);
         void *p2 = vmalloc (1);
         if (!p1 || !p2)
+        {
             kpanic ("vmalloc test: unique alloc returned NULL");
+        }
         if (p1 == p2)
+        {
             kpanic ("vmalloc test: duplicate addresses");
+        }
         pr_info ("vmalloc: 2 unique allocs p1=0x%x p2=0x%x\n", (uint32_t)p1,
                  (uint32_t)p2);
         vfree (p1, 1);
@@ -164,7 +192,9 @@ vmalloc_test (void)
     {
         void *brk = vbrk ();
         if ((uint32_t)brk < VMALLOC_BASE || (uint32_t)brk > VMALLOC_MAX)
+        {
             kpanic ("vmalloc test: vbrk outside vmalloc zone");
+        }
         pr_info ("vmalloc: vbrk=0x%x\n", (uint32_t)brk);
     }
 

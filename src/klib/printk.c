@@ -20,7 +20,9 @@ log_buf_putchar (char c)
     log_buf[log_write_idx] = c;
     log_write_idx = (log_write_idx + 1) % LOG_BUF_SIZE;
     if (log_size < LOG_BUF_SIZE)
+    {
         log_size++;
+    }
 }
 
 static void
@@ -123,7 +125,9 @@ printk (const char *format, ...)
                 {
                     const char *str = va_arg (args, const char *);
                     if (str == NULL)
+                    {
                         str = "(null)";
+                    }
                     print_string (str);
                     count += strlen (str);
                     break;
