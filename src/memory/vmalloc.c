@@ -10,19 +10,19 @@
 // one bit per virtual page in the vmalloc zone; 0 = free, 1 = used
 static uint32_t bitmap[BITMAP_WORDS];
 
-static void
+static inline void
 bitmap_set (uint32_t idx)
 {
     bitmap[idx / 32] |= (1u << (idx % 32));
 }
 
-static void
+static inline void
 bitmap_clear (uint32_t idx)
 {
     bitmap[idx / 32] &= ~(1u << (idx % 32));
 }
 
-static int
+static inline int
 bitmap_test (uint32_t idx)
 {
     return (bitmap[idx / 32] >> (idx % 32)) & 1;
