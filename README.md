@@ -46,7 +46,7 @@ make run-bin        # Boot the raw binary in QEMU (no GRUB)
 
 A bootable kernel loaded by GRUB, built on an assembly entry point, with a minimal library providing basic types and utility functions. Writes to VGA for screen output. Configures and loads the GDT and IDT to handle keyboard interrupts.
 
-### v0.2.0 - Memory
+### v0.2.0 - Memory ✅
 
 A complete memory management system with pagination handling. R/W rights on memory. User space and kernel space separation. Physical and virtual memory management. Kernel heap allocator (kmalloc, kfree, ksize, kbrk): returns virtual addresses backed by physically contiguous pages, operating on top of the paging layer. Virtual memory allocator (vmalloc, vfree, vsize, vbrk): provides large, virtually contiguous allocations mapped across physically fragmented pages through page tables, suitable for large buffers where physical contiguity unavailable. Kernel panic handling.
 
