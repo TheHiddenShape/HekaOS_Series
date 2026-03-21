@@ -1,5 +1,6 @@
 #include "kpanic.h"
 #include "interrupts.h"
+#include "io.h"
 
 static void
 panic_clear_screen (volatile uint16_t *vga)
@@ -22,12 +23,20 @@ panic_print (volatile uint16_t *vga, int pos, const char *str)
     }
 }
 
+static void
+panic_disable_cursor (void)
+{
+    outb (0x3D4, 0x0A);
+    outb (0x3D5, 0x20);
+}
+
 void
 kpanic (const char *msg)
 {
     volatile uint16_t *vga = (volatile uint16_t *)VGA_PANIC_ADDR;
 
     disable_interrupts ();
+    panic_disable_cursor ();
     panic_clear_screen (vga);
     panic_print (vga, 0, "KERNEL PANIC: ");
     panic_print (vga, 14, msg);
