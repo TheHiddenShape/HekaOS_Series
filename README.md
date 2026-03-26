@@ -1,27 +1,45 @@
-# HekaOS v0.1.0
+# HekaOS
 
 An x86 monolithic hybrid kernel written from scratch in **C** and **Rust**.
 
-This is the first milestone in a series leading to v1.0.0, the first stable release of a fully functional OS. Design decisions and architectural choices are documented on my personal [blog](https://ammons-organization-1.gitbook.io/thehiddenshape/system-and-networks/kfs-kernel-from-scratch-series).
+This is a series leading to v1.0.0, the first stable release of a fully functional OS. Design decisions and architectural choices are documented on my personal [blog](https://ammons-organization-1.gitbook.io/thehiddenshape/system-and-networks/kfs-kernel-from-scratch-series).
 
 ## Core Features
 
-- **GDT (Global Descriptor Table)** - segmentation setup for protected mode (even though in protected mode it's more of a privilege table than anything else...)
-- **IDT (Interrupt Descriptor Table)** - interrupt and exception handling
-- **VGA text mode** - 80x25 screen output for display and shell rendering
-- **Keyboard driver** - PS/2 keyboard input via IRQ1
-- **Kernel stack** - properly aligned stack for kernel execution
-- **Kernel ring buffer** - internal log buffer for kernel messages
-- **Command-line interface** - interactive shell (`hekashell`) with the following built-in commands:
+### CPU & Interrupts
+- **GDT (Global Descriptor Table)** - 7-entry segmentation setup with kernel (ring 0) and user (ring 3) code/data/stack segments
+- **IDT (Interrupt Descriptor Table)** - 256-entry table handling CPU exceptions (GPF, page fault) and hardware interrupts
+- **PIC (8259)** - remapped IRQ 0-15 to INT 32-47
+- **ISR handlers** - exception handling with CR2 reporting for page faults
 
-| Command    | Description                            |
-|------------|----------------------------------------|
-| `help`     | Show available commands                |
-| `dmesg`    | Display the kernel ring buffer         |
-| `reboot`   | Reboot the system                      |
-| `shutdown` | Power off the system (ACPI)            |
-| `halt`     | Halt the CPU                           |
+### Memory Management
+- **PMM (Physical Memory Manager)** - bitmap-based frame allocator managing 64 MiB of physical RAM (4 KiB frames starting at 4 MiB)
+- **Paging (VMM)** - 32-bit protected mode paging with identity-mapped first 4 MiB, recursive page directory (PD[1023]), 3GB/1GB kernel/user split
+- **kmalloc / kfree** - kernel heap allocator (`0xC0000000`–`0xEFFFFFFF`) with first-fit strategy, 8-byte alignment, forward/backward coalescing, and auto-growing pages. Includes `kbrk`, `ksize`, `kmalloc_query`
+- **vmalloc / vfree** - virtual page allocator (`0xF0000000`–`0xFFBFFFFF`) for large virtually contiguous allocations across physically fragmented pages. Includes `vbrk`, `vsize`, `vmalloc_query`
+- **Kernel panic** - halts CPU with interrupts disabled on unrecoverable errors
 
+### Drivers & I/O
+- **VGA text mode** - 80x25 terminal with scrolling, cursor tracking, color palette, and a themed status bar
+- **Keyboard driver** - PS/2 keyboard input via IRQ1 with US QWERTY scancode-to-ASCII conversion
+- **I/O ports** - `inb`/`outb`/`outw`/`io_wait` primitives
+
+### Kernel Utilities
+- **printk** - printf-style kernel logging (`%s`, `%d`, `%u`, `%x`, `%p`, `%c`) with log levels (emerg → debug) and 4 KiB circular ring buffer
+- **memset / strlen / strcmp** - basic klib string and memory utilities
+- **Kernel stack info** - runtime stack layout and usage reporting
+
+### Shell
+- **hekashell** - interactive command-line interface with the following built-in commands:
+
+| Command    | Description                                         |
+|------------|-----------------------------------------------------|
+| `help`     | Show available commands                             |
+| `dmesg`    | Display the kernel ring buffer                      |
+| `memdump`  | Show memory usage (heap/vmalloc stats)              |
+| `reboot`   | Reboot the system                                   |
+| `shutdown` | Power off the system (ACPI)                         |
+| `halt`     | Halt the CPU                                        |
 ## Building & Running
 
 ### Build with Docker (recommended)
