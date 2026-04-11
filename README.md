@@ -34,37 +34,37 @@ This is a series leading to v1.0.0, the first stable release of a fully function
 
 | Command    | Description                                         |
 |------------|-----------------------------------------------------|
-| `help`     | Show available commands                             |
-| `dmesg`    | Display the kernel ring buffer                      |
-| `memdump`  | Show memory usage (heap/vmalloc stats)              |
-| `reboot`   | Reboot the system                                   |
-| `shutdown` | Power off the system (ACPI)                         |
-| `halt`     | Halt the CPU                                        |
+| `help`     | show available commands                             |
+| `dmesg`    | display the kernel ring buffer                      |
+| `memdump`  | show memory usage (heap/vmalloc stats)              |
+| `reboot`   | reboot the system                                   |
+| `shutdown` | power off the system (ACPI)                         |
+| `halt`     | halt the CPU                                        |
 ## Building & Running
 
 ### Build with Docker (recommended)
 
 ```bash
-make docker-build   # Builds cross-compiler + kernel inside Docker
-make run-iso        # Boot the ISO in QEMU
+make docker-build   # builds cross-compiler + kernel inside docker
+make run-iso        # boot the ISO in QEMU
 ```
 
 ### Build with a local cross-compiler
 
 ```bash
-make all            # Produces kernel/hekaos.bin and kernel/hekaos.iso
-make run-iso        # Boot the ISO in QEMU
+make all            # produces kernel/hekaos.bin and kernel/hekaos.iso
+make run-iso        # boot the ISO in QEMU
 # or
-make run-bin        # Boot the raw binary in QEMU (no GRUB)
+make run-bin        # boot the raw binary in QEMU (no GRUB)
 ```
 
 ## Roadmap
 
-### v0.1.0: Primitives boot sequences ✅
+### v0.1.0: Primitives boot sequences
 
 a bootable kernel loaded by GRUB, built on an assembly entry point, with a minimal library providing basic types and utility functions. Writes to VGA for screen output. Configures and loads the GDT and IDT to handle keyboard interrupts.
 
-### v0.2.0: Memory ✅
+### v0.2.0: Memory
 
 the memory subsystem covers the following: pagination, read/write permissions, user/kernel space separation, physical/virtual memory management, and heap allocator helpers (kmalloc, kfree, ksize, kbrk for physical, vmalloc, vfree, vsize, vbrk for virtual), alongside kernel panic handling.
 
