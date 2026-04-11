@@ -1,5 +1,7 @@
 # HekaOS
 
+![alt](https://i.imgur.com/LRGsWcg.jpeg)
+
 An x86 monolithic hybrid kernel written from scratch in **C** and **Rust**.
 
 This is a series leading to v1.0.0, the first stable release of a fully functional OS. Design decisions and architectural choices are documented on my personal [blog](https://ammons-organization-1.gitbook.io/thehiddenshape/system-and-networks/kfs-kernel-from-scratch-series).
