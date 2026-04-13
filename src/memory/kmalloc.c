@@ -1,15 +1,15 @@
-#include "klib.h"
 #include "kmalloc.h"
+#include "klib.h"
 #include "kpanic.h"
 #include "paging.h"
 #include "printk.h"
 #include <stddef.h>
 #include <stdint.h>
 
-// align sz up to the nearest 8-byte boundary
+/* align sz up to the nearest 8-byte boundary */
 #define ALIGN8(sz) (((sz) + 7) & ~(uint32_t)7)
 
-// minimum viable split remainder: header + 8 bytes of usable data
+/* minimum viable split remainder: header + 8 bytes of usable data */
 #define BLOCK_MIN (sizeof (kblock_t) + 8)
 
 typedef struct kblock
@@ -44,7 +44,7 @@ heap_grow (uint32_t nbytes)
         kpanic ("kmalloc: kernel heap limit reached");
     }
 
-    // Map each new page via the paging layer
+    /* map each new page via the paging layer */
     for (uint32_t i = 0; i < pages; i++)
     {
         void *vaddr = (void *)(heap_end + i * PAGE_SIZE);
@@ -54,7 +54,7 @@ heap_grow (uint32_t nbytes)
         }
     }
 
-    // Walk to the last block
+    /* walk to the last block */
     kblock_t *last = NULL;
     kblock_t *cur = heap_head;
     while (cur)
@@ -63,8 +63,8 @@ heap_grow (uint32_t nbytes)
         cur = cur->next;
     }
 
-    /* If the last block is free and sits right at heap_end, just grow it
-     * instead of creating a new header (avoids fragmentation at boundaries).*/
+    /* if the last block is free and sits right at heap_end, just grow it
+     * instead of creating a new header (avoids fragmentation at boundaries). */
     if (last && !last->used
         && ((uint8_t *)last + sizeof (kblock_t) + last->size == heap_end))
     {
@@ -95,7 +95,7 @@ heap_init (void)
 {
     heap_head = NULL;
     heap_end = (uint8_t *)KHEAP_VIRT_BASE;
-    heap_grow (0); // map first page and prime the free list
+    heap_grow (0); /* map first page and prime the free list */
     pr_info ("Heap initialized: base=0x%x end=0x%x\n", KHEAP_VIRT_BASE,
              (uint32_t)heap_end);
     printk ("\n");
@@ -114,10 +114,10 @@ kbrk (uint32_t nbytes)
     return heap_end;
 }
 
-// kmalloc – use for small, sub-page kernel objects (structs, buffers < 1 page).
-// For large or page-granularity allocations use vmalloc to avoid heap
-// fragmentation.
-/* first-fit allocator. Alignment: all returned pointers are 8-byte aligned
+/* kmalloc – use for small, sub-page kernel objects (structs, buffers < 1 page).
+ * for large or page-granularity allocations use vmalloc to avoid heap
+ * fragmentation. */
+/* first-fit allocator. alignment: all returned pointers are 8-byte aligned
  * (ALIGN8 on size, and KHEAP_VIRT_BASE is page-aligned so headers are
  * naturally 8-aligned). */
 void *
@@ -130,7 +130,7 @@ kmalloc (size_t size)
 
     size = ALIGN8 (size);
 
-    // First-fit search through the block list
+    /* first-fit search through the block list */
     kblock_t *blk = heap_head;
     while (blk)
     {
@@ -141,7 +141,7 @@ kmalloc (size_t size)
         blk = blk->next;
     }
 
-    // No suitable free block – grow the heap and retry
+    /* no suitable free block – grow the heap and retry */
     if (!blk)
     {
         heap_grow (size);
@@ -160,7 +160,7 @@ kmalloc (size_t size)
         }
     }
 
-    // Split if the leftover is large enough to form its own block
+    /* split if the leftover is large enough to form its own block */
     if (blk->size >= size + BLOCK_MIN)
     {
         kblock_t *split
@@ -181,8 +181,8 @@ kmalloc (size_t size)
     return (uint8_t *)blk + sizeof (kblock_t);
 }
 
-/*kfree – return a block to the free list and coalesce with adjacent free
- * neighbours (both directions).*/
+/* kfree – return a block to the free list and coalesce with adjacent free
+ * neighbours (both directions). */
 void
 kfree (void *ptr)
 {
@@ -200,7 +200,7 @@ kfree (void *ptr)
 
     blk->used = 0;
 
-    // Coalesce forward: merge with next if it is free
+    /* coalesce forward: merge with next if it is free */
     if (blk->next && !blk->next->used)
     {
         kblock_t *nxt = blk->next;
@@ -212,7 +212,7 @@ kfree (void *ptr)
         }
     }
 
-    // Coalesce backward: merge into prev if it is free
+    /* coalesce backward: merge into prev if it is free */
     if (blk->prev && !blk->prev->used)
     {
         kblock_t *prv = blk->prev;
@@ -225,7 +225,7 @@ kfree (void *ptr)
     }
 }
 
-// ksize – return the usable byte count of an allocated block
+/* ksize – return the usable byte count of an allocated block */
 size_t
 ksize (void *ptr)
 {
@@ -241,7 +241,7 @@ kmalloc_test (void)
 {
     pr_info ("#### kmalloc test ####\n");
 
-    // 1. Basic alloc + write/read
+    /* 1. basic alloc + write/read */
     {
         uint32_t *p = kmalloc (sizeof (uint32_t));
         if (!p)
@@ -257,7 +257,7 @@ kmalloc_test (void)
         kfree (p);
     }
 
-    // 2. ksize reports at least the requested size
+    /* 2. ksize reports at least the requested size */
     {
         void *p = kmalloc (100);
         if (!p)
@@ -272,7 +272,7 @@ kmalloc_test (void)
         kfree (p);
     }
 
-    // 3. Multiple allocs return unique, non-overlapping pointers
+    /* 3. multiple allocs return unique, non-overlapping pointers */
     {
         void *p1 = kmalloc (32);
         void *p2 = kmalloc (64);
@@ -288,7 +288,7 @@ kmalloc_test (void)
         pr_info ("kmalloc: 3 unique allocs p1=0x%x p2=0x%x p3=0x%x\n",
                  (uint32_t)p1, (uint32_t)p2, (uint32_t)p3);
 
-        // 4. kfree + reuse: p4 must fall within the heap range
+        /* 4. kfree + reuse: p4 must fall within the heap range */
         kfree (p1);
         void *p4 = kmalloc (16);
         if (!p4)
@@ -301,11 +301,11 @@ kmalloc_test (void)
         }
         pr_info ("kmalloc: realloc after free at 0x%x\n", (uint32_t)p4);
 
-        // 5. kfree(NULL) is a no-op
+        /* 5. kfree(NULL) is a no-op */
         kfree (NULL);
         pr_info ("kmalloc: kfree(NULL) is no-op\n");
 
-        /* 6. Coalesce + large alloc: After freeing everything, a single
+        /* 6. coalesce + large alloc: after freeing everything, a single
          * contiguous block should be able to satisfy a larger request. */
         kfree (p4);
         kfree (p2);
@@ -320,7 +320,7 @@ kmalloc_test (void)
         kfree (big);
     }
 
-    // 7. kbrk extends the heap
+    /* 7. kbrk extends the heap */
     {
         void *end_before = kbrk (0);
         kbrk (PAGE_SIZE);
@@ -333,7 +333,7 @@ kmalloc_test (void)
                  (uint32_t)end_before, (uint32_t)end_after);
     }
 
-    // 8. Alignment: all returned pointers are 8-byte aligned
+    /* 8. alignment: all returned pointers are 8-byte aligned */
     {
         void *p1 = kmalloc (1);
         void *p2 = kmalloc (3);

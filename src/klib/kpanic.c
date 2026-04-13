@@ -1,6 +1,7 @@
 #include "kpanic.h"
 #include "interrupts.h"
 #include "io.h"
+#include "printk.h"
 
 static void
 panic_clear_screen (volatile uint16_t *vga)
@@ -40,7 +41,7 @@ kpanic (const char *msg)
     panic_clear_screen (vga);
     panic_print (vga, 0, "KERNEL PANIC: ");
     panic_print (vga, 14, msg);
-    panic_print (vga, VGA_PANIC_COLS, "System halted.");
-
+    panic_print (vga, VGA_PANIC_COLS, "system halted.");
+    panic_clear_registers ();
     disable_interrupts_and_halt ();
 }

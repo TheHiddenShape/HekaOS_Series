@@ -8,6 +8,7 @@
 #include "phys_page_frame.h"
 #include "pic.h"
 #include "printk.h"
+#include "trap_frame.h"
 #include "vmalloc.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -56,7 +57,7 @@ vga_entry (uint8_t uc, uint8_t color)
 
 static const size_t VGA_X = 80;
 static const size_t VGA_Y = 25;
-static const size_t USABLE_ROWS = 24; // last row reserved for status bar
+static const size_t USABLE_ROWS = 24; /* last row reserved for status bar */
 
 size_t terminal_row;
 size_t terminal_column;
@@ -64,7 +65,7 @@ uint8_t terminal_color;
 uint8_t statusbar_color;
 volatile uint16_t *terminal_buffer;
 
-// statusbar_putstr – write a string directly into the status bar row
+/* statusbar_putstr – write a string directly into the status bar row */
 static void
 statusbar_putstr (const char *s, size_t col)
 {
@@ -77,8 +78,7 @@ statusbar_putstr (const char *s, size_t col)
     }
 }
 
-// statusbar_putdec – write a decimal number into the status bar, return next
-// col
+/* statusbar_putdec – write a decimal number into the status bar, return next col */
 static size_t
 statusbar_putdec (uint32_t val, size_t col)
 {
@@ -97,7 +97,7 @@ statusbar_putdec (uint32_t val, size_t col)
             val /= 10;
         }
     }
-    // reverse and write
+    /* reverse and write */
     while (i > 0 && col < VGA_X)
     {
         terminal_buffer[(VGA_Y - 1) * VGA_X + col]
@@ -107,30 +107,29 @@ statusbar_putdec (uint32_t val, size_t col)
     return col;
 }
 
-// statusbar_draw – fill the bottom row with status info
+/* statusbar_draw – fill the bottom row with status info */
 static void
 statusbar_draw (void)
 {
-    // fill entire row with spaces
+    /* fill entire row with spaces */
     for (size_t x = 0; x < VGA_X; x++)
     {
         terminal_buffer[(VGA_Y - 1) * VGA_X + x]
             = vga_entry (' ', statusbar_color);
     }
 
-    // left side: mode info (1 space padding)
+    /* left side: mode info (1 space padding) */
     statusbar_putstr (" VGA text mode 80x25", 0);
 
-    // right side: build "col:X row:Y " into a temp buffer, then write
-    // right-aligned
+    /* right side: build "col:X row:Y " into a temp buffer, then write right-aligned */
     char right[32];
     int ri = 0;
-    // "col:"
+    /* "col:" */
     right[ri++] = 'c';
     right[ri++] = 'o';
     right[ri++] = 'l';
     right[ri++] = ':';
-    // column number
+    /* column number */
     {
         char tmp[6];
         int ti = 0;
@@ -153,12 +152,12 @@ statusbar_draw (void)
         }
     }
     right[ri++] = ' ';
-    // "row:"
+    /* "row:" */
     right[ri++] = 'r';
     right[ri++] = 'o';
     right[ri++] = 'w';
     right[ri++] = ':';
-    // row number
+    /* row number */
     {
         char tmp[6];
         int ti = 0;
@@ -182,7 +181,7 @@ statusbar_draw (void)
     }
     right[ri++] = ' ';
 
-    // write right-aligned (1 space padding from edge)
+    /* write right-aligned (1 space padding from edge) */
     size_t start = VGA_X - (size_t)ri;
     for (int j = 0; j < ri; j++)
     {
@@ -199,7 +198,7 @@ terminal_initialize (void)
     terminal_color = vga_entry_color (VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     terminal_buffer = (uint16_t *)0xB8000;
 
-    // pick status bar theme based on CPU cycle counter parity
+    /* pick status bar theme based on CPU cycle counter parity */
     if (rdtsc () & 1)
     {
         statusbar_color = vga_entry_color (VGA_COLOR_WHITE, VGA_COLOR_RED);
@@ -209,7 +208,7 @@ terminal_initialize (void)
         statusbar_color = vga_entry_color (VGA_COLOR_RED, VGA_COLOR_WHITE);
     }
 
-    // clear usable area
+    /* clear usable area */
     for (size_t y = 0; y < USABLE_ROWS; y++)
     {
         for (size_t x = 0; x < VGA_X; x++)
@@ -348,32 +347,32 @@ shell_print_prompt (void)
 void
 shell_reboot (void)
 {
-    terminal_writestring ("Rebooting...\n");
-    // use keyboard controller to trigger system reset
+    terminal_writestring ("rebooting...\n");
+    /* use keyboard controller to trigger system reset */
     outb (0x64, 0xFE);
-    // if that fails, halt
+    /* if that fails, halt */
     disable_interrupts_and_halt ();
 }
 
 void
 shell_halt (void)
 {
-    terminal_writestring ("System halted.\n");
+    terminal_writestring ("system halted.\n");
     disable_interrupts_and_halt ();
 }
 
 void
 shell_shutdown (void)
 {
-    terminal_writestring ("Shutting down...\n");
-    // ACPI shutdown: write SLP_EN (bit 13) to PM1a control block
-    // QEMU PIIX4: port 0x604, value 0x2000
+    terminal_writestring ("shutting down...\n");
+    /* ACPI shutdown: write SLP_EN (bit 13) to PM1a control block */
+    /* QEMU PIIX4: port 0x604, value 0x2000 */
     outw (0x604, 0x2000);
-    // Bochs / older QEMU fallback
+    /* Bochs / older QEMU fallback */
     outw (0xB004, 0x2000);
-    // VirtualBox fallback
+    /* VirtualBox fallback */
     outw (0x4004, 0x3400);
-    // if all fail, halt
+    /* if all fail, halt */
     terminal_writestring ("ACPI shutdown failed, halting.\n");
     disable_interrupts_and_halt ();
 }
@@ -422,7 +421,7 @@ terminal_write_hex (uint32_t value)
 static void
 shell_memdump (void)
 {
-    terminal_writestring ("=== memory dump ===\n");
+    terminal_writestring ("#### memory dump ####\n");
 
     kmalloc_stats_t ks;
     kmalloc_query (&ks);
@@ -458,13 +457,15 @@ shell_memdump (void)
 void
 shell_help (void)
 {
-    terminal_writestring ("Available commands:\n");
-    terminal_writestring ("  help     - Show this help message\n");
-    terminal_writestring ("  dmesg    - Display kernel ring buffer\n");
-    terminal_writestring ("  memdump  - Display memory usage summary\n");
-    terminal_writestring ("  reboot   - Reboot the system\n");
-    terminal_writestring ("  shutdown - Power off the system (ACPI)\n");
-    terminal_writestring ("  halt     - Halt the CPU\n");
+    terminal_writestring ("available commands:\n");
+    terminal_writestring ("  help     - show this help message\n");
+    terminal_writestring ("  dmesg    - display kernel ring buffer\n");
+    terminal_writestring ("  memdump  - display memory usage summary\n");
+    terminal_writestring ("  reboot   - reboot the system\n");
+    terminal_writestring ("  shutdown - power off the system (ACPI)\n");
+    terminal_writestring ("  halt     - halt the CPU\n");
+    terminal_writestring (
+        "  traptest - trigger INT 0x42 and dump the trap frame\n");
 }
 
 void
@@ -494,11 +495,17 @@ shell_execute (const char *cmd)
     {
         shell_memdump ();
     }
+    else if (strcmp (cmd, "traptest") == 0)
+    {
+        terminal_writestring ("triggering INT 0x42 (trap frame test)...\n");
+        trigger_trap_test ();
+        terminal_writestring ("returned from trap, trap frame OK\n");
+    }
     else if (cmd[0] != '\0')
     {
-        terminal_writestring ("Unknown command: ");
+        terminal_writestring ("unknown command: ");
         terminal_writestring (cmd);
-        terminal_writestring ("\nType 'help' for available commands.\n");
+        terminal_writestring ("\ntype 'help' for available commands.\n");
     }
     shell_print_prompt ();
 }
@@ -542,14 +549,14 @@ kprint_stack_info (void)
     uint32_t stack_used = stack_top_addr - esp;
     uint32_t stack_free = esp - stack_bottom_addr;
 
-    pr_info ("#### Kernel Stack ####\n");
-    pr_info ("Stack Top:        %p\n", (void *)stack_top_addr);
-    pr_info ("Stack Bottom:     %p\n", (void *)stack_bottom_addr);
-    pr_info ("Stack Size:       %d bytes (%d KB)\n", stack_size,
+    pr_info ("#### kernel stack ####\n");
+    pr_info ("stack top:        %p\n", (void *)stack_top_addr);
+    pr_info ("stack bottom:     %p\n", (void *)stack_bottom_addr);
+    pr_info ("stack size:       %d bytes (%d KB)\n", stack_size,
              stack_size / 1024);
-    pr_info ("Current ESP:      %p\n", (void *)esp);
-    pr_info ("Used:             %d bytes\n", stack_used);
-    pr_info ("Free:             %d bytes\n", stack_free);
+    pr_info ("current ESP:      %p\n", (void *)esp);
+    pr_info ("used:             %d bytes\n", stack_used);
+    pr_info ("free:             %d bytes\n", stack_free);
     printk ("\n");
 }
 
@@ -618,9 +625,9 @@ kernel_main (void)
     kprint_stack_info ();
     klog_gdt_info ();
 
-    pr_info ("HekaOS v0.1.0 initialized\n");
+    pr_info ("hekaOS v0.3.0 initialized\n");
 
-    terminal_writestring ("Welcome to HekaOS, type help to get started !\n\n");
+    terminal_writestring ("Welcome to hekaOS, type help to get started !\n\n");
     shell_print_prompt ();
 
     enable_interrupts ();

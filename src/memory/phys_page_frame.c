@@ -2,18 +2,18 @@
 #include "kpanic.h"
 #include "printk.h"
 
-// Total physical memory managed (64 MiB)
+/* total physical memory managed (64 MiB) */
 #define PHYS_MEM_SIZE 0x04000000
-// Physical memory managed starts after identity-mapped region (4 MiB)
+/* physical memory managed starts after identity-mapped region (4 MiB) */
 #define PHYS_REGION_START 0x00400000
 #define PHYS_FRAME_SIZE 4096
 #define PHYS_TOTAL_FRAMES (PHYS_MEM_SIZE / PHYS_FRAME_SIZE)
-// Number of frames available in the managed region
+/* number of frames available in the managed region */
 #define PHYS_REGION_FRAMES                                                     \
     ((PHYS_MEM_SIZE - PHYS_REGION_START) / PHYS_FRAME_SIZE)
 
-// Bitmap: 1 bit per frame. 0 = free, 1 = used. PHYS_TOTAL_FRAMES / 32 gives the
-// number of uint32_t words needed.
+/* bitmap: 1 bit per frame. 0 = free, 1 = used. PHYS_TOTAL_FRAMES / 32 gives the
+ * number of uint32_t words needed. */
 
 #define BITMAP_SIZE (PHYS_TOTAL_FRAMES / 32)
 
@@ -68,7 +68,7 @@ phys_alloc_frame (void)
     {
         if (frame_bitmap[i] == 0xFFFFFFFF)
         {
-            continue; // all 32 frames in this word are used */
+            continue; /* all 32 frames in this word are used */
         }
 
         for (j = 0; j < 32; j++)
@@ -96,14 +96,14 @@ phys_free_frame (void *frame)
 
     if (addr & (PHYS_FRAME_SIZE - 1))
     {
-        return; // not aligned
+        return; /* not aligned */
     }
 
     uint32_t index = addr / PHYS_FRAME_SIZE;
     if (index >= PHYS_TOTAL_FRAMES
         || index < (PHYS_REGION_START / PHYS_FRAME_SIZE))
     {
-        return; // out of range or reserved region
+        return; /* out of range or reserved region */
     }
 
     bitmap_clear (index);
@@ -131,7 +131,7 @@ phys_mem_test (void)
 {
     pr_info ("#### PMM check ####\n");
 
-    // free count after init must equal PHYS_REGION_FRAMES
+    /* free count after init must equal PHYS_REGION_FRAMES */
     {
         uint32_t free = phys_free_count ();
         if (free == PHYS_REGION_FRAMES)
@@ -145,7 +145,7 @@ phys_mem_test (void)
         }
     }
 
-    // alloc returns aligned, non-null, in-range address
+    /* alloc returns aligned, non-null, in-range address */
     {
         void *frame = phys_alloc_frame ();
         int ok = (frame != (void *)0)
@@ -163,7 +163,7 @@ phys_mem_test (void)
         phys_free_frame (frame);
     }
 
-    // alloc decrements free count, free restores it
+    /* alloc decrements free count, free restores it */
     {
         uint32_t before = phys_free_count ();
         void *frame = phys_alloc_frame ();
@@ -182,7 +182,7 @@ phys_mem_test (void)
         }
     }
 
-    // consecutive allocs return unique addresses
+    /* consecutive allocs return unique addresses */
     {
         void *a = phys_alloc_frame ();
         void *b = phys_alloc_frame ();
@@ -202,7 +202,7 @@ phys_mem_test (void)
         phys_free_frame (a);
     }
 
-    // free with unaligned address is ignored
+    /* free with unaligned address is ignored */
     {
         uint32_t before = phys_free_count ();
         phys_free_frame ((void *)0x00400001);
@@ -218,7 +218,7 @@ phys_mem_test (void)
         }
     }
 
-    // free in reserved region is ignored
+    /* free in reserved region is ignored */
     {
         uint32_t before = phys_free_count ();
         phys_free_frame ((void *)0x00001000);
@@ -234,7 +234,7 @@ phys_mem_test (void)
         }
     }
 
-    // free out of range is ignored
+    /* free out of range is ignored */
     {
         uint32_t before = phys_free_count ();
         phys_free_frame ((void *)0x10000000);
@@ -250,7 +250,7 @@ phys_mem_test (void)
         }
     }
 
-    // free null is ignored
+    /* free null is ignored */
     {
         uint32_t before = phys_free_count ();
         phys_free_frame ((void *)0x0);
@@ -266,7 +266,7 @@ phys_mem_test (void)
         }
     }
 
-    // exhaust all frames, then OOM returns null
+    /* exhaust all frames, then OOM returns null */
     {
         uint32_t total = phys_free_count ();
         uint32_t allocated = 0;
@@ -312,7 +312,7 @@ phys_mem_test (void)
             kpanic ("PMM exhaust: free count is not 0");
         }
 
-        // reinit to restore state for following tests
+        /* reinit to restore state for following tests */
         phys_mem_init ();
 
         if (phys_free_count () == PHYS_REGION_FRAMES)

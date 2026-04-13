@@ -5,7 +5,7 @@
 #define GDT_ENTRIES 7
 
 struct gdt_entry gdt[GDT_ENTRIES] __attribute__ ((section (
-    ".gdt"))); // tells the compiler: "put this variable in the .gdt section"
+    ".gdt"))); /* tells the compiler: "put this variable in the .gdt section" */
 struct gdt_ptr gp;
 
 extern void gdt_flush (uint32_t);
@@ -19,13 +19,13 @@ gdt_set_gate (int num, uint32_t base, uint32_t limit, uint8_t access,
         pr_err ("GDT: limit > 0xFFFFF is forbidden\n");
     }
 
-    gdt[num].base_low = (base & 0xFFFF);        // 16 lows bits
-    gdt[num].base_middle = (base >> 16) & 0xFF; // bits 16-23
-    gdt[num].base_high = (base >> 24) & 0xFF;   // 24-31 high bits
+    gdt[num].base_low = (base & 0xFFFF);        /* 16 low bits */
+    gdt[num].base_middle = (base >> 16) & 0xFF; /* bits 16-23 */
+    gdt[num].base_high = (base >> 24) & 0xFF;   /* 24-31 high bits */
 
-    gdt[num].limit_low = (limit & 0xFFFF); // 16 lows bits
+    gdt[num].limit_low = (limit & 0xFFFF); /* 16 low bits */
 
-    gdt[num].granularity = (limit >> 16) & 0x0F; // bits 16-19
+    gdt[num].granularity = (limit >> 16) & 0x0F; /* bits 16-19 */
     gdt[num].granularity |= gran & 0xF0;
 
     gdt[num].access = access;
@@ -37,23 +37,23 @@ gdt_init (void)
     gp.limit = (sizeof (struct gdt_entry) * GDT_ENTRIES) - 1;
     gp.base = (uint32_t)&gdt;
 
-    gdt_set_gate (0, 0, 0, 0, 0); // null segment
+    gdt_set_gate (0, 0, 0, 0, 0); /* null segment */
 
-    // ring 0, kernel segments, full CPU privileges
-    gdt_set_gate (1, 0x00000000, 0x000FFFFF, 0x9A, 0xCF); // kernel Code segment
-    gdt_set_gate (2, 0x00000000, 0x000FFFFF, 0x92, 0xCF); // kernel Data segment
+    /* ring 0, kernel segments, full CPU privileges */
+    gdt_set_gate (1, 0x00000000, 0x000FFFFF, 0x9A, 0xCF); /* kernel code segment */
+    gdt_set_gate (2, 0x00000000, 0x000FFFFF, 0x92, 0xCF); /* kernel data segment */
     gdt_set_gate (3, 0x00000000, 0x000FFFFF, 0x92,
-                  0xCF); // kernel Stack segment
+                  0xCF); /* kernel stack segment */
 
-    // ring 3, user segments, restricted privileges
+    /* ring 3, user segments, restricted privileges */
     gdt_set_gate (4, 0x00000000, 0x000FFFFF, 0xFA,
-                  0xCF); // User mode code segment
+                  0xCF); /* user mode code segment */
     gdt_set_gate (5, 0x00000000, 0x000FFFFF, 0xF2,
-                  0xCF); // User mode data segment
+                  0xCF); /* user mode data segment */
     gdt_set_gate (6, 0x00000000, 0x000FFFFF, 0xF2,
-                  0xCF); // User mode stack segment
+                  0xCF); /* user mode stack segment */
 
-    // load gdt into gdtr
+    /* load gdt into gdtr */
     gdt_flush ((uint32_t)&gp);
 }
 

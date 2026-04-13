@@ -30,28 +30,30 @@ paging_init (void)
 
     for (i = 0; i < PD_ENTRIES; i++)
     {
-        page_directory[i] = PAGE_RW; // non-present, r/w pre-configured
+        page_directory[i] = PAGE_RW; /* non-present, r/w pre-configured */
     }
 
-    // identity mapping
+    /*
+     * identity mapping: each entry stores the physical base address of its
+     * frame (i * PAGE_SIZE) with present and r/w bits set. the virtual-address
+     * page offset is added by the MMU at access time to reach the right byte.
+     */
     for (i = 0; i < PT_ENTRIES; i++)
     {
-        first_page_table[i]
-            = (i * PAGE_SIZE) | (PAGE_PRESENT | PAGE_RW); /* 0b11, bit 0
-present, bit 1 r/w, this is the base address of a frame, offset of The offset in
-the virtual address for physics will help us point to the right mem area */
+        first_page_table[i] = (i * PAGE_SIZE) | (PAGE_PRESENT | PAGE_RW);
     }
 
     page_directory[0] = ((uint32_t)first_page_table) | (PAGE_PRESENT | PAGE_RW);
-    /* recursive mapping: PD[1023] -> PD itself, so the MMU traverses
-       CR3 -> PD[1023] -> PD (as PT) -> PD[1023] -> phys addr of PD
-       this maps the PD at RECURSIVE_PD_BASE and all PTs at RECURSIVE_PT_BASE+
+    /*
+     * recursive mapping: PD[1023] -> PD itself, so the MMU traverses
+     * CR3 -> PD[1023] -> PD (as PT) -> PD[1023] -> phys addr of PD.
+     * this maps the PD at RECURSIVE_PD_BASE and all PTs at RECURSIVE_PT_BASE+
      */
     page_directory[1023]
         = ((uint32_t)page_directory) | (PAGE_PRESENT | PAGE_RW);
     load_page_directory ((uint32_t *)page_directory);
     enable_paging ();
-    pr_info ("Paging enabled (identity mapped first 4 MiB)\n");
+    pr_info ("paging enabled (identity mapped first 4 MiB)\n");
     printk ("\n");
 }
 
@@ -88,7 +90,7 @@ map_page (void *physaddr, void *virtualaddr, uint32_t flags)
     uint32_t ptindex = (uint32_t)virtualaddr >> 12 & 0x03FF;
     uint32_t *pd = (uint32_t *)RECURSIVE_PD_BASE;
 
-    if (!(pd[pdindex] & 0x01)) // check if not PAGE_PRESENT
+    if (!(pd[pdindex] & 0x01)) /* check if not PAGE_PRESENT */
     {
         if (pt_pool_next >= PT_POOL_SIZE)
         {
@@ -175,9 +177,9 @@ free_page (void *virtualaddr)
 void
 paging_test (void)
 {
-    pr_info ("#### Paging check ####\n");
+    pr_info ("#### paging check ####\n");
 
-    // verify CR0: PE and PG bits
+    /* verify CR0: PE and PG bits */
     {
         uint32_t cr0 = read_cr0 ();
         if ((cr0 & 0x80000001) == 0x80000001)
@@ -197,7 +199,7 @@ paging_test (void)
         }
     }
 
-    // verify CR3 points to page directory
+    /* verify CR3 points to page directory */
     {
         uint32_t cr3 = read_cr3 ();
         if (cr3 == (uint32_t)page_directory)
@@ -217,11 +219,11 @@ paging_test (void)
         *addr = 0xDEADBEEF;
         if (*addr == 0xDEADBEEF)
         {
-            pr_info ("Identity map: read/write at 0x100000\n");
+            pr_info ("identity map: read/write at 0x100000\n");
         }
         else
         {
-            kpanic ("Identity map: read/write failed at 0x100000");
+            kpanic ("identity map: read/write failed at 0x100000");
         }
         *addr = old;
     }
@@ -231,11 +233,11 @@ paging_test (void)
         void *phys = get_physaddr ((void *)0x100000);
         if (phys == (void *)0x100000)
         {
-            pr_info ("Identity map: virt 0x100000 resolves to phys 0x100000\n");
+            pr_info ("identity map: virt 0x100000 resolves to phys 0x100000\n");
         }
         else
         {
-            kpanic ("Identity map: virt 0x100000 wrong phys resolution");
+            kpanic ("identity map: virt 0x100000 wrong phys resolution");
         }
     }
 
@@ -245,7 +247,7 @@ paging_test (void)
         void *paddr = phys_alloc_frame ();
         if (!paddr)
         {
-            kpanic ("Map round-trip: could not allocate frame");
+            kpanic ("map round-trip: could not allocate frame");
         }
         else
         {
@@ -254,34 +256,34 @@ paging_test (void)
 
             if (resolved == paddr)
             {
-                pr_info ("Map round-trip: 0x%x -> 0x%x\n", (uint32_t)vaddr,
+                pr_info ("map round-trip: 0x%x -> 0x%x\n", (uint32_t)vaddr,
                          (uint32_t)paddr);
             }
             else
             {
-                kpanic ("Map round-trip: phys address mismatch");
+                kpanic ("map round-trip: phys address mismatch");
             }
 
             volatile uint32_t *ptr = (volatile uint32_t *)vaddr;
             *ptr = 0xCAFEBABE;
             if (*ptr == 0xCAFEBABE)
             {
-                pr_info ("Map round-trip: read/write through mapping\n");
+                pr_info ("map round-trip: read/write through mapping\n");
             }
             else
             {
-                kpanic ("Map round-trip: read/write failed");
+                kpanic ("map round-trip: read/write failed");
             }
 
             unmap_page (vaddr);
             void *after = get_physaddr (vaddr);
             if (after == (void *)0)
             {
-                pr_info ("Unmap: mapping removed at 0x%x\n", (uint32_t)vaddr);
+                pr_info ("unmap: mapping removed at 0x%x\n", (uint32_t)vaddr);
             }
             else
             {
-                kpanic ("Unmap: mapping still present");
+                kpanic ("unmap: mapping still present");
             }
             phys_free_frame (paddr);
         }
@@ -296,11 +298,11 @@ paging_test (void)
 
         if (before == after)
         {
-            pr_info ("Map: unaligned virtual address rejected\n");
+            pr_info ("map: unaligned virtual address rejected\n");
         }
         else
         {
-            kpanic ("Map: unaligned virtual address was accepted");
+            kpanic ("map: unaligned virtual address was accepted");
         }
     }
 
@@ -377,11 +379,11 @@ paging_test (void)
 
         if (r1 && r2 && r3)
         {
-            pr_info ("Multi-alloc: 3 pages allocated\n");
+            pr_info ("multi-alloc: 3 pages allocated\n");
         }
         else
         {
-            kpanic ("Multi-alloc: allocation failed");
+            kpanic ("multi-alloc: allocation failed");
         }
 
         void *p1 = get_physaddr (v1);
@@ -390,11 +392,11 @@ paging_test (void)
 
         if (p1 != p2 && p2 != p3 && p1 != p3)
         {
-            pr_info ("Multi-alloc: unique physical frames\n");
+            pr_info ("multi-alloc: unique physical frames\n");
         }
         else
         {
-            kpanic ("Multi-alloc: duplicate physical frames");
+            kpanic ("multi-alloc: duplicate physical frames");
         }
 
         *(volatile uint32_t *)v1 = 0xAAAAAAAA;
@@ -405,11 +407,11 @@ paging_test (void)
             && *(volatile uint32_t *)v2 == 0xBBBBBBBB
             && *(volatile uint32_t *)v3 == 0xCCCCCCCC)
         {
-            pr_info ("Multi-alloc: no cross-talk between pages\n");
+            pr_info ("multi-alloc: no cross-talk between pages\n");
         }
         else
         {
-            kpanic ("Multi-alloc: cross-talk detected between pages");
+            kpanic ("multi-alloc: cross-talk detected between pages");
         }
 
         free_page (v3);
@@ -433,5 +435,5 @@ paging_test (void)
         }
     }
 
-    pr_info ("Paging check passed\n");
+    pr_info ("paging check passed\n");
 }

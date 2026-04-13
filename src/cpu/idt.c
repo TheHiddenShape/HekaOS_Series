@@ -32,6 +32,9 @@ idt_init (void)
     idt_set_gate (13, (uint32_t)isr13, 0x08, 0x8E);
     idt_set_gate (14, (uint32_t)isr14, 0x08, 0x8E);
     idt_set_gate (33, (uint32_t)irq1, 0x08, 0x8E);
+    idt_set_gate (66, (uint32_t)isr66, 0x08, 0x8E);
+
+    /* todo: set other gates */
 
     idt_load ((uint32_t)&idp);
 }

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-// bitmap-based frame allocator. https://wiki.osdev.org/Page_Frame_Allocation
+/* bitmap-based frame allocator. https://wiki.osdev.org/Page_Frame_Allocation */
 
 void phys_mem_init (void);
 void *phys_alloc_frame (void);

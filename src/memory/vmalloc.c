@@ -1,5 +1,5 @@
-#include "klib.h"
 #include "vmalloc.h"
+#include "klib.h"
 #include "kpanic.h"
 #include "paging.h"
 #include "printk.h"
@@ -8,7 +8,7 @@
 #define VMALLOC_PAGES ((VMALLOC_MAX - VMALLOC_BASE + 1) / PAGE_SIZE)
 #define BITMAP_WORDS ((VMALLOC_PAGES + 31) / 32)
 
-// one bit per virtual page in the vmalloc zone; 0 = free, 1 = used
+/* one bit per virtual page in the vmalloc zone; 0 = free, 1 = used */
 static uint32_t bitmap[BITMAP_WORDS];
 
 static inline void
@@ -52,7 +52,7 @@ vmalloc (uint32_t npages)
         return NULL;
     }
 
-    // first-fit: find a contiguous run of npages free pages
+    /* first-fit: find a contiguous run of npages free pages */
     uint32_t run = 0;
     uint32_t start = 0;
     for (uint32_t i = 0; i < VMALLOC_PAGES; i++)
@@ -85,7 +85,7 @@ vmalloc (uint32_t npages)
     return NULL;
 }
 
-// vfree – unmap and release npages pages starting at ptr
+/* vfree – unmap and release npages pages starting at ptr */
 void
 vfree (void *ptr, uint32_t npages)
 {
@@ -112,7 +112,7 @@ vfree (void *ptr, uint32_t npages)
     }
 }
 
-// vbrk – returns the address of the first free page in the vmalloc zone
+/* vbrk – returns the address of the first free page in the vmalloc zone */
 void *
 vbrk (void)
 {
@@ -126,7 +126,7 @@ vbrk (void)
     return (void *)VMALLOC_MAX;
 }
 
-// vsize – vmalloc granularity is always one page
+/* vsize – vmalloc granularity is always one page */
 uint32_t
 vsize (void)
 {
@@ -138,7 +138,7 @@ vmalloc_test (void)
 {
     pr_info ("#### vmalloc test ####\n");
 
-    // 1. Single-page alloc + write/read
+    /* 1. single-page alloc + write/read */
     {
         uint32_t *p = vmalloc (1);
         if (!p)
@@ -154,7 +154,7 @@ vmalloc_test (void)
         vfree (p, 1);
     }
 
-    // 2. Multi-page alloc + touch first and last bytes
+    /* 2. multi-page alloc + touch first and last bytes */
     {
         uint8_t *p = vmalloc (4);
         if (!p)
@@ -171,7 +171,7 @@ vmalloc_test (void)
         vfree (p, 4);
     }
 
-    // 3. Two allocations return distinct non-overlapping addresses
+    /* 3. two allocations return distinct non-overlapping addresses */
     {
         void *p1 = vmalloc (1);
         void *p2 = vmalloc (1);
@@ -189,7 +189,7 @@ vmalloc_test (void)
         vfree (p2, 1);
     }
 
-    // 4. vbrk falls inside the vmalloc zone
+    /* 4. vbrk falls inside the vmalloc zone */
     {
         void *brk = vbrk ();
         if ((uint32_t)brk < VMALLOC_BASE || (uint32_t)brk > VMALLOC_MAX)
@@ -199,11 +199,11 @@ vmalloc_test (void)
         pr_info ("vmalloc: vbrk=0x%x\n", (uint32_t)brk);
     }
 
-    // 5. vfree(NULL) is a no-op
+    /* 5. vfree(NULL) is a no-op */
     vfree (NULL, 0);
     pr_info ("vmalloc: vfree(NULL) is no-op\n");
 
-    // 6. Reuse after vfree: freed page is recycled
+    /* 6. reuse after vfree: freed page is recycled */
     {
         void *p1 = vmalloc (1);
         if (!p1)
@@ -225,7 +225,7 @@ vmalloc_test (void)
         vfree (p2, 1);
     }
 
-    // 7. Bitmap fragmentation: free middle slot, reuse it, large alloc goes after
+    /* 7. bitmap fragmentation: free middle slot, reuse it, large alloc goes after */
     {
         void *a = vmalloc (1);
         void *b = vmalloc (1);
@@ -234,7 +234,7 @@ vmalloc_test (void)
         {
             kpanic ("vmalloc test: frag alloc returned NULL");
         }
-        vfree (b, 1); // create a 1-page hole between a and c
+        vfree (b, 1); /* create a 1-page hole between a and c */
         void *d = vmalloc (1);
         if (!d)
         {
@@ -244,7 +244,7 @@ vmalloc_test (void)
         {
             kpanic ("vmalloc test: first-fit did not reuse hole");
         }
-        // 2-page alloc must skip the filled hole and go after c
+        /* 2-page alloc must skip the filled hole and go after c */
         void *e = vmalloc (2);
         if (!e)
         {
@@ -254,8 +254,8 @@ vmalloc_test (void)
         {
             kpanic ("vmalloc test: 2-page alloc overlaps with c");
         }
-        pr_info ("vmalloc: frag ok d=0x%x(==b) e=0x%x(>c=0x%x)\n",
-                 (uint32_t)d, (uint32_t)e, (uint32_t)c);
+        pr_info ("vmalloc: frag ok d=0x%x(==b) e=0x%x(>c=0x%x)\n", (uint32_t)d,
+                 (uint32_t)e, (uint32_t)c);
         vfree (a, 1);
         vfree (d, 1);
         vfree (c, 1);

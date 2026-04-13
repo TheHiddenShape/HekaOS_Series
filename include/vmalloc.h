@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-// vmalloc zone: above kmalloc heap (0xEFFFFFFF), below recursive-PT window
+/* vmalloc zone: above kmalloc heap (0xEFFFFFFF), below recursive-PT window */
 #define VMALLOC_BASE 0xF0000000
 #define VMALLOC_MAX 0xFFBFFFFF
 

@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 /*
-https://wiki.osdev.org/Interrupt_Descriptor_Table
-Intel SDM Vol. 3A 6.11 "IDT Descriptors"
-*/
+ * https://wiki.osdev.org/Interrupt_Descriptor_Table
+ * Intel SDM Vol. 3A 6.11 "IDT Descriptors"
+ */
 
 struct idt_entry
 {
@@ -23,12 +23,15 @@ struct idt_ptr
     uint32_t base;
 } __attribute__ ((packed));
 
-// CPU exceptions
-extern void isr13 (void); // general Protection Fault
-extern void isr14 (void); // page Fault
+/* CPU exceptions */
+extern void isr13 (void); /* general protection fault */
+extern void isr14 (void); /* page fault */
 
-// hardware interrupts (IRQs)
-extern void irq1 (void); // keyboard (IRQ 1)
+/* software interrupts */
+extern void isr66 (void); /* trap frame test (0x42) */
+
+/* hardware interrupts (IRQs) */
+extern void irq1 (void); /* keyboard (IRQ 1) */
 
 void idt_init (void);
 void idt_set_gate (uint8_t num, uint32_t base, uint16_t selector,

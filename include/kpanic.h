@@ -6,6 +6,8 @@
 #define VGA_PANIC_ROWS 25
 #define VGA_PANIC_COLOR 0x4F /* white on red */
 
+extern void panic_clear_registers (void);
+
 void kpanic (const char *msg);
 
 #endif

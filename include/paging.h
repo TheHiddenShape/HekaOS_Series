@@ -4,16 +4,16 @@
 #include <stdint.h>
 
 /*
-https://wiki.osdev.org/Paging
-https://wiki.osdev.org/Setting_Up_Paging
-*/
+ * https://wiki.osdev.org/Paging
+ * https://wiki.osdev.org/Setting_Up_Paging
+ */
 
-// PTE flags — memory rights
+/* PTE flags — memory rights */
 #define PAGE_PRESENT 0x01
 #define PAGE_RW 0x02
 #define PAGE_USER 0x04
 
-// User/Kernel classic space split (3GB/1GB)
+/* user/kernel classic space split (3GB/1GB) */
 #define KERNEL_VIRT_BASE 0xC0000000
 
 #define PAGE_SIZE 4096

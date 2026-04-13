@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 /*
-https://wiki.osdev.org/Global_Descriptor_Table
-Intel SDM Vol. 3A 3.4.5 "Segment Descriptor Types"
-*/
+ * https://wiki.osdev.org/Global_Descriptor_Table
+ * Intel SDM Vol. 3A 3.4.5 "Segment Descriptor Types"
+ */
 
 struct gdt_entry
 {

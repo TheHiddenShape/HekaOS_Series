@@ -1,9 +1,9 @@
 #include "io.h"
 #include <stdint.h>
 
-/* PIC ports, each chip (master and slave) has a command port and a data port.
-When no command is issued, the data port allows us to access the interrupt mask
-of the 8259 PIC. */
+/* pic ports, each chip (master and slave) has a command port and a data port.
+   when no command is issued, the data port allows us to access the interrupt mask
+   of the 8259 PIC. */
 
 #define PIC1_COMMAND 0x20
 #define PIC1_DATA (PIC1_COMMAND + 1)
@@ -14,14 +14,14 @@ of the 8259 PIC. */
 #define PIC2_SHIFT_OFFSET 0x28
 #define PIC1_SHIFT_OFFSET 0x20
 
-#define PIC_EOI 0x20 // end of Interrupt
+#define PIC_EOI 0x20 /* end of interrupt */
 
 #define ICW1_ICW4 0x01
 #define ICW1_INIT 0x10
 #define ICW4_8086 0x01
 
-/* remap the PIC By default, IRQ 0-7 map to INT 0x08-0x0F But INT 0x08-0x0F are
-reserved for CPU exceptions. So we remap: IRQ 0-15 → INT 32-47 */
+/* remap the PIC: by default, IRQ 0-7 map to INT 0x08-0x0F but INT 0x08-0x0F are
+   reserved for CPU exceptions. so we remap: IRQ 0-15 → INT 32-47 */
 
 void
 pic_remap (void)
@@ -32,31 +32,31 @@ pic_remap (void)
     outb (PIC2_COMMAND, ICW1_INIT | ICW1_ICW4);
     io_wait ();
 
-    // ICW2 shift vector offsets (Re definition)
-    outb (PIC1_DATA, PIC1_SHIFT_OFFSET); // master PIC: IRQ 0-7  → INT 32-39
+    /* ICW2 shift vector offsets (re-definition) */
+    outb (PIC1_DATA, PIC1_SHIFT_OFFSET); /* master PIC: IRQ 0-7  → INT 32-39 */
     io_wait ();
-    outb (PIC2_DATA, PIC2_SHIFT_OFFSET); // slave PIC:  IRQ 8-15 → INT 40-47
+    outb (PIC2_DATA, PIC2_SHIFT_OFFSET); /* slave PIC:  IRQ 8-15 → INT 40-47 */
     io_wait ();
 
-    // ICW3 cascade topology configuration:
+    /* ICW3 cascade topology configuration: */
     outb (PIC1_DATA, 4);
     io_wait ();
 
-    // tell slave PIC its cascade identity
+    /* tell slave PIC its cascade identity */
     outb (PIC2_DATA, 2);
     io_wait ();
 
-    // ICW4, set 8086 mode
+    /* ICW4, set 8086 mode */
     outb (PIC1_DATA, ICW4_8086);
     io_wait ();
     outb (PIC2_DATA, ICW4_8086);
     io_wait ();
 
-    // mask all interrupts except IRQ1 (keyboard)
+    /* mask all interrupts except IRQ1 (keyboard) */
     outb (PIC1_DATA, 0xFD);
-    outb (PIC2_DATA, 0xFF); // mask all slave PIC interrupts
+    outb (PIC2_DATA, 0xFF); /* mask all slave PIC interrupts */
 
-    // end of sequence
+    /* end of sequence */
 }
 
 void
