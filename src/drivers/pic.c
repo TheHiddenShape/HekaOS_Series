@@ -2,8 +2,8 @@
 #include <stdint.h>
 
 /* pic ports, each chip (master and slave) has a command port and a data port.
-   when no command is issued, the data port allows us to access the interrupt mask
-   of the 8259 PIC. */
+   when no command is issued, the data port allows us to access the interrupt
+   mask of the 8259 PIC. */
 
 #define PIC1_COMMAND 0x20
 #define PIC1_DATA (PIC1_COMMAND + 1)

@@ -40,8 +40,10 @@ gdt_init (void)
     gdt_set_gate (0, 0, 0, 0, 0); /* null segment */
 
     /* ring 0, kernel segments, full CPU privileges */
-    gdt_set_gate (1, 0x00000000, 0x000FFFFF, 0x9A, 0xCF); /* kernel code segment */
-    gdt_set_gate (2, 0x00000000, 0x000FFFFF, 0x92, 0xCF); /* kernel data segment */
+    gdt_set_gate (1, 0x00000000, 0x000FFFFF, 0x9A,
+                  0xCF); /* kernel code segment */
+    gdt_set_gate (2, 0x00000000, 0x000FFFFF, 0x92,
+                  0xCF); /* kernel data segment */
     gdt_set_gate (3, 0x00000000, 0x000FFFFF, 0x92,
                   0xCF); /* kernel stack segment */
 

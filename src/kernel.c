@@ -78,7 +78,8 @@ statusbar_putstr (const char *s, size_t col)
     }
 }
 
-/* statusbar_putdec – write a decimal number into the status bar, return next col */
+/* statusbar_putdec – write a decimal number into the status bar, return next
+ * col */
 static size_t
 statusbar_putdec (uint32_t val, size_t col)
 {
@@ -121,7 +122,8 @@ statusbar_draw (void)
     /* left side: mode info (1 space padding) */
     statusbar_putstr (" VGA text mode 80x25", 0);
 
-    /* right side: build "col:X row:Y " into a temp buffer, then write right-aligned */
+    /* right side: build "col:X row:Y " into a temp buffer, then write
+     * right-aligned */
     char right[32];
     int ri = 0;
     /* "col:" */

@@ -225,7 +225,8 @@ vmalloc_test (void)
         vfree (p2, 1);
     }
 
-    /* 7. bitmap fragmentation: free middle slot, reuse it, large alloc goes after */
+    /* 7. bitmap fragmentation: free middle slot, reuse it, large alloc goes
+     * after */
     {
         void *a = vmalloc (1);
         void *b = vmalloc (1);
