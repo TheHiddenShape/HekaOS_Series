@@ -25,8 +25,8 @@ AS = $(TARGET_PATH)-as
 LD = $(TARGET_PATH)-ld
 
 ASFLAGS = -I$(SRC_DIR) -I$(BOOT_DIR) -I$(CPU_DIR) -I$(DRIVERS_DIR)
-CFLAGS  = -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I$(SRC_DIR) -Iinclude -MMD -MP
-LDFLAGS = -T $(LINKER_SCRIPT) -ffreestanding -O2 -nostdlib
+CFLAGS  = -std=gnu99 -ffreestanding -Wall -Wextra -fno-builtin -fno-stack-protector -I$(SRC_DIR) -Iinclude -MMD -MP
+LDFLAGS = -T $(LINKER_SCRIPT) -ffreestanding -nostdlib -nodefaultlibs
 
 BOOT_OBJS = $(OBJ_DIR)/boot.o
 
