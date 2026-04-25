@@ -75,7 +75,7 @@ the memory subsystem covers the following: pagination, read/write permissions, u
 
 ### v0.3.0: Interrupts
 
-hardware interrupts, software interrupts, an interrupts descriptor table, signal handling and scheduling, global panic fault handling, Registers cleaning, Stack saving
+hardware interrupts, software interrupts, an interrupts descriptor table, signal handling and scheduling, global panic fault handling, stack saving
 
 ### v0.4.0: Processes
 
