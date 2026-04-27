@@ -11,9 +11,9 @@
 
 void heap_init (void);
 void *kmalloc (size_t size);
-void kfree (void *ptr);
+void kfree (void *addr);
 void *kbrk (uint32_t nbytes); /* nbytes=0 → query current end, else extend */
-size_t ksize (void *ptr);
+size_t ksize (void *addr);
 
 typedef struct
 {

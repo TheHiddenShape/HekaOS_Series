@@ -184,14 +184,14 @@ kmalloc (size_t size)
 /* kfree – return a block to the free list and coalesce with adjacent free
  * neighbours (both directions). */
 void
-kfree (void *ptr)
+kfree (void *addr)
 {
-    if (!ptr)
+    if (!addr)
     {
         return;
     }
 
-    kblock_t *blk = (kblock_t *)((uint8_t *)ptr - sizeof (kblock_t));
+    kblock_t *blk = (kblock_t *)((uint8_t *)addr - sizeof (kblock_t));
 
     if (!blk->used)
     {
@@ -227,13 +227,13 @@ kfree (void *ptr)
 
 /* ksize – return the usable byte count of an allocated block */
 size_t
-ksize (void *ptr)
+ksize (void *addr)
 {
-    if (!ptr)
+    if (!addr)
     {
         return 0;
     }
-    return ((kblock_t *)((uint8_t *)ptr - sizeof (kblock_t)))->size;
+    return ((kblock_t *)((uint8_t *)addr - sizeof (kblock_t)))->size;
 }
 
 void

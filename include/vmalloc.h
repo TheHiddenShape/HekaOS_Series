@@ -9,7 +9,7 @@
 
 void vmalloc_init (void);
 void *vmalloc (uint32_t npages);
-void vfree (void *ptr, uint32_t npages);
+void vfree (void *addr);
 void *vbrk (void);
 uint32_t vsize (void);
 
@@ -17,6 +17,7 @@ typedef struct
 {
     uint32_t used_pages;
     uint32_t total_pages;
+    uint32_t region_count;
 } vmalloc_stats_t;
 
 void vmalloc_test (void);

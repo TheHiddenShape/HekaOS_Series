@@ -1,4 +1,5 @@
 #include "vmalloc.h"
+#include "kmalloc.h"
 #include "klib.h"
 #include "kpanic.h"
 #include "paging.h"
@@ -10,6 +11,15 @@
 
 /* one bit per virtual page in the vmalloc zone; 0 = free, 1 = used */
 static uint32_t bitmap[BITMAP_WORDS];
+
+struct vmalloc_region
+{
+    uint32_t             start;
+    uint32_t             npages;
+    struct vmalloc_region *next;
+};
+
+static struct vmalloc_region *region_list = NULL;
 
 static inline void
 bitmap_set (uint32_t idx)
@@ -52,6 +62,12 @@ vmalloc (uint32_t npages)
         return NULL;
     }
 
+    struct vmalloc_region *region = kmalloc (sizeof (struct vmalloc_region));
+    if (!region)
+    {
+        return NULL;
+    }
+
     /* first-fit: find a contiguous run of npages free pages */
     uint32_t run = 0;
     uint32_t start = 0;
@@ -74,6 +90,10 @@ vmalloc (uint32_t npages)
                     }
                     bitmap_set (j);
                 }
+                region->start  = start;
+                region->npages = npages;
+                region->next   = region_list;
+                region_list  = region;
                 return (void *)(VMALLOC_BASE + start * PAGE_SIZE);
             }
         }
@@ -82,31 +102,53 @@ vmalloc (uint32_t npages)
             run = 0;
         }
     }
+    kfree (region);
     return NULL;
 }
 
-/* vfree – unmap and release npages pages starting at ptr */
+/* vfree – unmap and release the region tracked for addr */
 void
-vfree (void *ptr, uint32_t npages)
+vfree (void *addr)
 {
-    if (!ptr || !npages)
+    if (!addr)
     {
         return;
     }
 
-    uint32_t vaddr = (uint32_t)ptr;
+    uint32_t vaddr = (uint32_t)addr;
     if (vaddr < VMALLOC_BASE || vaddr >= VMALLOC_MAX)
     {
         kpanic ("vfree: pointer outside vmalloc zone");
     }
 
     uint32_t idx = (vaddr - VMALLOC_BASE) / PAGE_SIZE;
+
+    struct vmalloc_region *prev = NULL;
+    struct vmalloc_region *cur  = region_list;
+    while (cur && cur->start != idx)
+    {
+        prev = cur;
+        cur  = cur->next;
+    }
+    if (!cur)
+    {
+        kpanic ("vfree: pointer not allocated by vmalloc");
+    }
+
+    if (prev)
+    {
+        prev->next = cur->next;
+    }
+    else
+    {
+        region_list = cur->next;
+    }
+
+    uint32_t npages = cur->npages;
+    kfree (cur);
+
     for (uint32_t i = 0; i < npages; i++)
     {
-        if (!bitmap_test (idx + i))
-        {
-            kpanic ("vfree: page not allocated");
-        }
         free_page ((void *)(VMALLOC_BASE + (idx + i) * PAGE_SIZE));
         bitmap_clear (idx + i);
     }
@@ -151,7 +193,7 @@ vmalloc_test (void)
             kpanic ("vmalloc test: write/read failed");
         }
         pr_info ("vmalloc: 1-page alloc at 0x%x\n", (uint32_t)p);
-        vfree (p, 1);
+        vfree (p);
     }
 
     /* 2. multi-page alloc + touch first and last bytes */
@@ -168,7 +210,7 @@ vmalloc_test (void)
             kpanic ("vmalloc test: multi-page r/w failed");
         }
         pr_info ("vmalloc: 4-page alloc at 0x%x\n", (uint32_t)p);
-        vfree (p, 4);
+        vfree (p);
     }
 
     /* 3. two allocations return distinct non-overlapping addresses */
@@ -185,8 +227,8 @@ vmalloc_test (void)
         }
         pr_info ("vmalloc: 2 unique allocs p1=0x%x p2=0x%x\n", (uint32_t)p1,
                  (uint32_t)p2);
-        vfree (p1, 1);
-        vfree (p2, 1);
+        vfree (p1);
+        vfree (p2);
     }
 
     /* 4. vbrk falls inside the vmalloc zone */
@@ -200,7 +242,7 @@ vmalloc_test (void)
     }
 
     /* 5. vfree(NULL) is a no-op */
-    vfree (NULL, 0);
+    vfree (NULL);
     pr_info ("vmalloc: vfree(NULL) is no-op\n");
 
     /* 6. reuse after vfree: freed page is recycled */
@@ -211,7 +253,7 @@ vmalloc_test (void)
             kpanic ("vmalloc test: reuse alloc returned NULL");
         }
         uint32_t addr1 = (uint32_t)p1;
-        vfree (p1, 1);
+        vfree (p1);
         void *p2 = vmalloc (1);
         if (!p2)
         {
@@ -222,7 +264,7 @@ vmalloc_test (void)
             kpanic ("vmalloc test: freed page not reused");
         }
         pr_info ("vmalloc: reuse ok p2=0x%x == old p1\n", (uint32_t)p2);
-        vfree (p2, 1);
+        vfree (p2);
     }
 
     /* 7. bitmap fragmentation: free middle slot, reuse it, large alloc goes
@@ -235,7 +277,7 @@ vmalloc_test (void)
         {
             kpanic ("vmalloc test: frag alloc returned NULL");
         }
-        vfree (b, 1); /* create a 1-page hole between a and c */
+        vfree (b); /* create a 1-page hole between a and c */
         void *d = vmalloc (1);
         if (!d)
         {
@@ -257,10 +299,10 @@ vmalloc_test (void)
         }
         pr_info ("vmalloc: frag ok d=0x%x(==b) e=0x%x(>c=0x%x)\n", (uint32_t)d,
                  (uint32_t)e, (uint32_t)c);
-        vfree (a, 1);
-        vfree (d, 1);
-        vfree (c, 1);
-        vfree (e, 2);
+        vfree (a);
+        vfree (d);
+        vfree (c);
+        vfree (e);
     }
 
     pr_info ("vmalloc test passed\n\n");
@@ -278,5 +320,10 @@ vmalloc_query (vmalloc_stats_t *s)
         {
             s->used_pages++;
         }
+    }
+
+    for (struct vmalloc_region *n = region_list; n; n = n->next)
+    {
+        s->region_count++;
     }
 }
