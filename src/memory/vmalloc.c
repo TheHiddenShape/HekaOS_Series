@@ -71,35 +71,48 @@ vmalloc (uint32_t npages)
     /* first-fit: find a contiguous run of npages free pages */
     uint32_t run = 0;
     uint32_t start = 0;
-    for (uint32_t i = 0; i < VMALLOC_PAGES; i++)
+    for (uint32_t w = 0; w < BITMAP_WORDS; w++)
     {
-        if (!bitmap_test (i))
-        {
-            if (!run)
-            {
-                start = i;
-            }
-            if (++run == npages)
-            {
-                for (uint32_t j = start; j < start + npages; j++)
-                {
-                    void *vaddr = (void *)(VMALLOC_BASE + j * PAGE_SIZE);
-                    if (!alloc_page (vaddr, PAGE_PRESENT | PAGE_RW))
-                    {
-                        kpanic ("vmalloc: alloc_page failed");
-                    }
-                    bitmap_set (j);
-                }
-                region->start = start;
-                region->npages = npages;
-                region->next = region_list;
-                region_list = region;
-                return (void *)(VMALLOC_BASE + start * PAGE_SIZE);
-            }
-        }
-        else
+        if (bitmap[w] == 0xFFFFFFFF)
         {
             run = 0;
+            continue;
+        }
+        for (uint32_t b = 0; b < 32; b++)
+        {
+            uint32_t i = w * 32 + b;
+            if (i >= VMALLOC_PAGES)
+            {
+                break;
+            }
+            if (!((bitmap[w] >> b) & 1))
+            {
+                if (!run)
+                {
+                    start = i;
+                }
+                if (++run == npages)
+                {
+                    for (uint32_t j = start; j < start + npages; j++)
+                    {
+                        void *vaddr = (void *)(VMALLOC_BASE + j * PAGE_SIZE);
+                        if (!alloc_page (vaddr, PAGE_PRESENT | PAGE_RW))
+                        {
+                            kpanic ("vmalloc: alloc_page failed");
+                        }
+                        bitmap_set (j);
+                    }
+                    region->start = start;
+                    region->npages = npages;
+                    region->next = region_list;
+                    region_list = region;
+                    return (void *)(VMALLOC_BASE + start * PAGE_SIZE);
+                }
+            }
+            else
+            {
+                run = 0;
+            }
         }
     }
     kfree (region);
