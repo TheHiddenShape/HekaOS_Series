@@ -30,6 +30,7 @@ typedef struct
 {
     uint32_t pool_pages;
     uint32_t free_objects;
+    uint32_t used_objects;
 } kmalloc_stats_t;
 
 void kmalloc_test (void);

@@ -28,6 +28,7 @@ struct kmem_cache
 static struct kmem_cache caches[KMEM_CACHE_COUNT];
 static uint8_t *cpool_vptr = (uint8_t *)KCPOOL_VIRT_BASE;
 static uint32_t cpool_page_count = 0;
+static uint32_t cpool_used_count = 0;
 
 /* returns index of first cache whose obj_size >= size */
 static int
@@ -97,6 +98,7 @@ kmalloc_init (void)
 {
     cpool_vptr = (uint8_t *)KCPOOL_VIRT_BASE;
     cpool_page_count = 0;
+    cpool_used_count = 0;
 
     for (int i = 0; i < KMEM_CACHE_COUNT; i++)
     {
@@ -131,6 +133,7 @@ kmalloc (size_t size)
     cpool_hdr_t *hdr = (cpool_hdr_t *)((uintptr_t)chunk & ~(uintptr_t)0xFFF);
     caches[idx].free_list = *chunk;
     hdr->free_count--;
+    cpool_used_count++;
 
     return (void *)chunk;
 }
@@ -149,6 +152,7 @@ kfree (void *addr)
     *(void **)addr = caches[idx].free_list;
     caches[idx].free_list = addr;
     hdr->free_count++;
+    cpool_used_count--;
 
     if (hdr->free_count == hdr->total_count)
     {
@@ -188,6 +192,7 @@ void
 kmalloc_query (kmalloc_stats_t *s)
 {
     s->pool_pages = cpool_page_count;
+    s->used_objects = cpool_used_count;
     s->free_objects = 0;
 
     for (int i = 0; i < KMEM_CACHE_COUNT; i++)
