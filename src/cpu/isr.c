@@ -28,23 +28,23 @@ static void
 gpf_handler (struct trap_frame *frame)
 {
     trap_frame_display (frame);
-    kpanic ("General Protection Fault");
+    kpanic ("general protection fault");
 }
 
 static void
 page_fault_handler (struct trap_frame *frame)
 {
-    pr_err ("Page Fault: faulting address=0x%x err=0x%x\n", read_cr2 (),
+    pr_err ("page fault: faulting address=0x%x err=0x%x\n", read_cr2 (),
             frame->err_code);
     trap_frame_display (frame);
-    kpanic ("Page Fault");
+    kpanic ("page fault");
 }
 
 static void
 unhandled_exception (struct trap_frame *frame)
 {
     trap_frame_display (frame);
-    kpanic ("Unhandled Exception");
+    kpanic ("unhandled exception");
 }
 
 void
@@ -52,11 +52,83 @@ isr_handler (struct trap_frame *frame)
 {
     switch (frame->int_no)
     {
-        case 13:
+        case 0: /* todo: check CPL, send SIGFPE to process in userspace */
+            trap_frame_display (frame);
+            kpanic ("division by zero");
+            break;
+        case 1: /* todo: hook into ptrace/kgdb debug trap in userspace */
+            trap_frame_display (frame);
+            kpanic ("debugger exception");
+            break;
+        case 2: /* NMI, always kernel level: watchdog, hardware error */
+            trap_frame_display (frame);
+            kpanic ("non-maskable interrupt");
+            break;
+        case 3: /* todo: hook into ptrace/kgdb breakpoint in userspace */
+            trap_frame_display (frame);
+            kpanic ("breakpoint");
+            break;
+        case 4: /* todo: check CPL, send SIGSEGV to process in userspace */
+            trap_frame_display (frame);
+            kpanic ("overflow");
+            break;
+        case 5: /* todo: check CPL, send SIGSEGV to process in userspace */
+            trap_frame_display (frame);
+            kpanic ("bound range exceeded");
+            break;
+        case 6: /* todo: check CPL, send SIGILL to process in userspace */
+            trap_frame_display (frame);
+            kpanic ("invalid opcode");
+            break;
+        case 7: /* todo: implement lazy FPU context switch in userspace */
+            trap_frame_display (frame);
+            kpanic ("coprocessor not available");
+            break;
+        case 8: /* Double Fault, always panic, unrecoverable */
+            trap_frame_display (frame);
+            kpanic ("double fault");
+            break;
+        case 9: /* todo: check CPL, send SIGFPE to process in userspace */
+            trap_frame_display (frame);
+            kpanic ("coprocessor segment overrun");
+            break;
+        case 10: /* todo: check CPL, send SIGSEGV to process in userspace */
+            trap_frame_display (frame);
+            kpanic ("invalid task state segment");
+            break;
+        case 11: /* todo: check CPL, send SIGBUS to process in userspace */
+            trap_frame_display (frame);
+            kpanic ("segment not present");
+            break;
+        case 12: /* todo: check CPL, send SIGBUS to process in userspace */
+            trap_frame_display (frame);
+            kpanic ("stack fault");
+            break;
+        case 13: /* todo: check CPL, send SIGSEGV to process in userspace */
             gpf_handler (frame);
             break;
-        case 14:
+        case 14: /* todo: demand paging, copy-on-write, swap in userspace */
             page_fault_handler (frame);
+            break;
+        case 15:
+            trap_frame_display (frame);
+            kpanic ("reserved exception (0x0f)");
+            break;
+        case 16: /* todo: check CPL, send SIGFPE to process in userspace */
+            trap_frame_display (frame);
+            kpanic ("x87 math fault");
+            break;
+        case 17: /* todo: check CPL, send SIGBUS to process in userspace */
+            trap_frame_display (frame);
+            kpanic ("alignment check");
+            break;
+        case 18: /* Machine Check, always panic, hardware error */
+            trap_frame_display (frame);
+            kpanic ("machine check");
+            break;
+        case 19: /* todo: check CPL, send SIGFPE to process in userspace */
+            trap_frame_display (frame);
+            kpanic ("simd floating-point exception");
             break;
         case 66:
         {
