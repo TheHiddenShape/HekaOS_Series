@@ -6,34 +6,24 @@ An x86 monolithic hybrid kernel written from scratch in **C** and **Rust**.
 
 This is a series leading to v1.0.0, the first stable release of a fully functional OS. Design decisions and architectural choices are documented on my personal [blog](https://ammons-organization-1.gitbook.io/thehiddenshape/system-and-networks/kfs-kernel-from-scratch-series).
 
-## Core Features
+## Internals
 
-### CPU & Interrupts
-- **GDT (Global Descriptor Table)**: 7-entry segmentation setup with kernel (ring 0) and user (ring 3) code/data/stack segments
-- **IDT (Interrupt Descriptor Table)**: 256-entry table handling CPU exceptions (GPF, page fault) and hardware interrupts
-- **PIC (8259)**: remapped IRQ 0-15 to INT 32-47
-- **ISR handlers**: exception handling with CR2 reporting for page faults
+CPU & Interrupts
+: 7-entry GDT with ring 0/3 segmentation, 256-entry IDT covering CPU exceptions (0x00–0x13) and hardware IRQs remapped to INT 32–47 via the 8259 PIC. Each exception handler captures a full trap frame with CR2 reporting on page faults. Unrecoverable faults trigger `kpanic`, which halts the kernel with a full register dump and trap frame display.
 
-### Memory management
-- **PMM (Physical Memory Manager)**: bitmap-based frame allocator managing 64 MiB of physical RAM (4 KiB frames starting at 4 MiB). Provides `phys_alloc_frame` (first-fit) and `phys_alloc_contiguous(n)` (sliding-window scan for n physically adjacent frames), used for DMA and contiguous buffer requirements
-- **Paging (VMM)**: 32-bit protected mode paging with identity-mapped first 4 MiB, recursive page directory (PD[1023]), 3GB/1GB kernel/user split
-- **kmem_dyn_alloc / kmem_free**: general-purpose dynamic heap allocator (`0xC0000000`–`0xCFFFFFFF`), byte-precise with 8-byte alignment, doubly-linked free-list, first-fit strategy, bi-directional coalescing, auto-growing via `alloc_page`. Includes `kmem_brk`, `kmem_size`, `kmem_dyn_alloc_query`. Use for allocations > 256 bytes or arbitrary sizes
-- **kmalloc / kfree**: chunk pool allocator (`0xD0000000`–`0xEFFFFFFF`) with 6 fixed-size caches (8 / 16 / 32 / 64 / 128 / 256 bytes). O(1) alloc and free via intrusive free-lists. Each pool page carries a header tracking `obj_size`, `free_count`, and `total_count`. Full pages are returned to the PMM automatically. Panics on requests > 256 bytes — use `kmem_alloc` instead. Includes `ksize`, `kmalloc_query`
-- **vmalloc / vfree**: virtual page allocator (`0xF0000000`–`0xFFBFFFFF`) for large virtually contiguous allocations backed by physically non-contiguous frames. Includes `vbrk`, `vsize`, `vmalloc_query`
-- **Kernel panic**: halts CPU with interrupts disabled on unrecoverable errors
+Memory
+: bitmap PMM over 64 MiB of physical RAM (4 KiB frames from 4 MiB), with `phys_alloc_contiguous(n)` for DMA requirements. 32-bit paging with identity-mapped first 4 MiB, recursive page directory at PD[1023], and a 3GB/1GB kernel/user split. Three allocators cover the virtual address space: `kmem_dyn_alloc` (`0xC0000000`) is a general-purpose heap with first-fit strategy, 8-byte alignment, and bi-directional coalescing; `kmalloc` (`0xD0000000`) is a slab-style pool with 6 fixed-size caches (8–256 bytes) and O(1) alloc/free; `vmalloc` (`0xF0000000`) handles large virtually contiguous regions backed by physically non-contiguous frames.
 
-### Drivers & I/O
-- **VGA text mode**: 80x25 terminal with scrolling, cursor tracking, color palette, and a themed status bar
-- **Keyboard driver**: PS/2 keyboard input via IRQ1 with US QWERTY scancode-to-ASCII conversion
-- **I/O ports**: `inb`/`outb`/`outw`/`io_wait` primitives
+Drivers
+: VGA 80x25 text mode with hardware-panned scrolling (VGA start address register, no memmove on newline), keyboard-driven scrollback through history via arrow and page keys, cursor tracking, and a themed status bar. PS/2 keyboard input via IRQ1 with US QWERTY scancode mapping. Port I/O via `inb`/`outb`/`outw`/`io_wait` primitives.
 
-### Kernel utilities
-- **printk**: printf-style kernel logging (`%s`, `%d`, `%u`, `%x`, `%p`, `%c`) with log levels (emerg → debug) and 4 KiB circular ring buffer
-- **memset / strlen / strcmp**: basic klib string and memory utilities
-- **Kernel stack info**: runtime stack layout and usage reporting
+Signals
+: Linux i386 ABI-compatible signal numbering (SIGHUP–SIGTSTP). CPU exceptions are mapped to their POSIX counterparts (`#PF` -> SIGSEGV, `#DE` -> SIGFPE, etc.) via `signal_from_exception()`. Supports handler registration, default actions (terminate/ignore), and a per-task pending signal bitmask.
 
-### Shell
-- **hekashell**: interactive command-line interface with the following built-in commands:
+Utilities
+: `printk` with 6 log levels (emerg -> debug) and a 4 KiB circular ring buffer. klib covers `memset`, `strlen`, `strcmp`. Runtime stack layout and usage reporting via kernel stack info.
+hekashell
+: interactive command-line interface with the following built-in commands:
 
 preview**
 ![alt](https://i.imgur.com/GghDdPP.png)
@@ -64,7 +54,7 @@ make run-iso        # boot the ISO in QEMU
 make run-bin        # boot the raw binary in QEMU (no GRUB)
 ```
 
-## Roadmap
+## Preview Releases
 
 ### v0.1.0: Primitives boot sequences
 
@@ -72,7 +62,7 @@ a bootable kernel loaded by GRUB, built on an assembly entry point, with a minim
 
 ### v0.2.0: Memory
 
-the memory subsystem covers the following: pagination, read/write permissions, user/kernel space separation, physical/virtual memory management, and heap allocator helpers (kmalloc, kfree, ksize, kbrk for physical, vmalloc, vfree, vsize, vbrk for virtual), alongside kernel panic handling.
+the memory subsystem covers the following: pagination, read/write permissions, user/kernel space separation, physical/virtual memory management, and heap allocator helpers, alongside kernel panic handling.
 
 ### v0.3.0: Interrupts
 
@@ -98,7 +88,9 @@ registering kernel modules (creation/destruction), loading modules at boot time,
 
 a complete interface to read, parse, store, and execute ELF files, syscalls to read ELF files and launch a process with them, a kernel module in ELF, ready to be inserted at run time.
 
-### v0.9.0: N / A
+### v0.9.0: Stabilization
+
+kernel-wide hardening, bug fixing, and reliability improvements in preparation for the first stable release.
 
 ### v1.0.0: First stable release
 
