@@ -79,4 +79,19 @@ struct task
     sig_handler_t signal_handlers[NSIG]; /* per-signal handler */
 };
 
+#define MAX_PROC 128
+
+extern uint32_t task_counter;
+
+/* n-ary tree helpers */
+void task_add_child (struct task *parent, struct task *child);
+void task_remove_child (struct task *parent, struct task *child);
+void task_reparent (struct task *task, struct task *new_parent);
+
+/* iterate over direct children of parent and child (struct task *) is the loop
+ * cursor */
+#define task_for_each_child(parent, child)                                     \
+    for ((child) = (parent)->children; (child) != NULL;                        \
+         (child) = (child)->sibling)
+
 #endif /* TASK_H */
