@@ -22,6 +22,7 @@ preview**
 | `shutdown` | power off the system (ACPI)                         |
 | `halt`     | halt the CPU                                        |
 | `keymap`   | switch keyboard layout (`qwerty` \| `azerty`)       |
+| `eyeproc`  | full-screen process grid monitor (ESC to quit)      |
 ## Building & Running
 
 ### Build with Docker (recommended)
