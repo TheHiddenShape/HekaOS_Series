@@ -725,6 +725,8 @@ kernel_main (void)
     vmalloc_init ();
     vmalloc_test ();
 
+    task_init ();
+
     print_banner ();
 
     kprint_stack_info ();

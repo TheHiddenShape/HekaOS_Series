@@ -19,7 +19,7 @@
 #define PAGE_SIZE 4096
 
 void paging_init (void);
-void paging_proc_init (uint32_t pid);
+uint32_t paging_proc_init (uint32_t pid);
 void paging_proc_switch (uint32_t pid);
 
 void load_page_directory (uint32_t *page_directory);

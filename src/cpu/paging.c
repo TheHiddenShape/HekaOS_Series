@@ -174,7 +174,7 @@ free_page (void *virtualaddr)
     phys_free_frame (phys);
 }
 
-void
+void uint32_t
 paging_proc_init (uint32_t pid)
 {
     uint32_t i;
@@ -194,6 +194,9 @@ paging_proc_init (uint32_t pid)
     }
 
     pd[1023] = ((uint32_t)pd) | (PAGE_PRESENT | PAGE_RW);
+
+    /* kernel is identity-mapped: virtual == physical for static kernel data */
+    return (uint32_t)pd;
 }
 
 void

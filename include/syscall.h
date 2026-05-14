@@ -7,6 +7,8 @@
 /* syscall numbers (Linux i386 ABI) */
 #define SYS_EXIT 1
 #define SYS_WRITE 4
+#define SYS_GETUID 199
+#define SYS_GETEUID 201
 
 void syscall_dispatch (struct trap_frame *frame);
 

@@ -1,5 +1,7 @@
 #include "syscall.h"
 #include "interrupts.h"
+#include "signal.h"
+#include "task.h"
 #include "trap_frame.h"
 #include "vga.h"
 #include <stddef.h>
@@ -12,9 +14,16 @@ typedef int32_t (*syscall_fn_t) (uint32_t, uint32_t, uint32_t);
 static int32_t
 sys_exit (uint32_t status, uint32_t unused1, uint32_t unused2)
 {
-    (void)status;
     (void)unused1;
     (void)unused2;
+    current_task->exit_code = (int32_t)status;
+    current_task->state = TASK_ZOMBIE;
+    if (current_task->parent)
+    {
+        kernel_signal_send (current_task->parent, SIGCHLD);
+    }
+    /* scheduler will collect exit_code via wait() and reschedule; halt until
+     * then */
     disable_interrupts_and_halt ();
     return 0;
 }
@@ -34,9 +43,29 @@ sys_write (uint32_t fd, uint32_t buf, uint32_t count)
     return (int32_t)count;
 }
 
+static int32_t
+sys_getuid (uint32_t unused0, uint32_t unused1, uint32_t unused2)
+{
+    (void)unused0;
+    (void)unused1;
+    (void)unused2;
+    return (int32_t)current_task->uid;
+}
+
+static int32_t
+sys_geteuid (uint32_t unused0, uint32_t unused1, uint32_t unused2)
+{
+    (void)unused0;
+    (void)unused1;
+    (void)unused2;
+    return (int32_t)current_task->euid;
+}
+
 static const syscall_fn_t syscall_table[SYSCALL_TABLE_SIZE] = {
     [SYS_EXIT] = sys_exit,
     [SYS_WRITE] = sys_write,
+    [SYS_GETUID] = sys_getuid,
+    [SYS_GETEUID] = sys_geteuid,
 };
 
 void

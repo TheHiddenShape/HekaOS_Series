@@ -48,8 +48,6 @@ struct mm_struct
 
 /*
  * task descriptor: represents a process.
- *
- * Planned extensions: exit_code collected by the parent on TASK_ZOMBIE.
  */
 struct task
 {
@@ -71,6 +69,8 @@ struct task
     struct task *next; /* intrusive singly-linked list for the scheduler,
                         * will become a list_head when needed */
 
+    int32_t exit_code; /* set on TASK_ZOMBIE, collected by parent via wait() */
+
     uint32_t uid;  /* real user id: owner of this process */
     uint32_t euid; /* effective user id: used for inter-process permission
                     * checks (signaling, ptrace); future: gid/egid when FS
@@ -84,6 +84,12 @@ struct task
 
 extern uint32_t task_counter;
 extern struct task *task_list_head;
+extern struct task *current_task;
+extern struct task init_task;
+
+void task_init (void);
+
+void exec_fn (uint32_t *addr, uint32_t *function, uint32_t size);
 
 /* n-ary tree helpers */
 void task_add_child (struct task *parent, struct task *child);
