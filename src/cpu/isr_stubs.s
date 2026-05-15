@@ -92,6 +92,32 @@ irq_common_stub:
     call irq_handler
     add $4, %esp
 
+    cmpl $0, need_resched
+    je .Lno_resched
+
+    # pick the current task and move the current stack pointer in task_thread->esp
+    # saving routine
+    mov current_task, %eax
+    mov %esp, 8(%eax)
+
+    # current_task = next_task; esp = next->thread.esp
+    # switch stack pointer to next task
+    mov next_task, %eax
+    mov %eax, current_task
+    mov 8(%eax), %esp
+
+    # reload CR3 only if pgdir differs; mm.pgdir lives at +32
+    # i.e. multiples threads of same proc
+    mov 32(%eax), %ebx
+    mov %cr3, %ecx
+    cmp %ebx, %ecx
+    je .Lskip_cr3
+    mov %ebx, %cr3
+
+.Lskip_cr3:
+    movl $0, need_resched
+
+.Lno_resched:
     pop %eax
     mov %ax, %ds
     mov %ax, %es

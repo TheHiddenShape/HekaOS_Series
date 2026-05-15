@@ -1,6 +1,8 @@
 #include "pit.h"
 #include "io.h"
+#include "printk.h"
 #include "sched.h"
+#include <stdint.h>
 
 /*
  * PIT mode/command byte for channel 0:
@@ -26,5 +28,7 @@ pit_init (uint32_t hz)
 void
 timer_tick (void)
 {
+    static uint32_t tick_count = 0;
+    pr_debug ("pit: tick %u\n", ++tick_count);
     schedule ();
 }

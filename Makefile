@@ -29,8 +29,10 @@ ifeq ($(UNAME_S),Linux)
 QEMU_KVM = -enable-kvm
 endif
 
+# DEBUG_FLAGS = -DDEBUG
+
 ASFLAGS = -I$(SRC_DIR) -I$(BOOT_DIR) -I$(CPU_DIR) -I$(DRIVERS_DIR)
-CFLAGS  = -std=gnu99 -ffreestanding -Wall -Wextra -fno-builtin -fno-stack-protector -I$(SRC_DIR) -Iinclude -MMD -MP
+CFLAGS  = -std=gnu99 -ffreestanding -Wall -Wextra -fno-builtin -fno-stack-protector -I$(SRC_DIR) -Iinclude -MMD -MP $(DEBUG_FLAGS)
 LDFLAGS = -T $(LINKER_SCRIPT) -ffreestanding -nostdlib -nodefaultlibs
 
 BOOT_OBJS = $(OBJ_DIR)/boot.o

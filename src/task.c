@@ -28,6 +28,9 @@ task_init (void)
 {
     task_list_head = &init_task;
     current_task = &init_task;
+    /* inherit the currently loaded kernel pgdir so the asm switch can safely
+     * reload CR3 when other tasks switch back to init_task */
+    init_task.mm.pgdir = read_cr3 ();
 }
 
 void

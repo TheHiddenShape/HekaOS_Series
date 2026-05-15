@@ -11,6 +11,7 @@
 #include "pic.h"
 #include "pit.h"
 #include "printk.h"
+#include "proc_test.h"
 #include "task.h"
 #include "trap_frame.h"
 #include "vga.h"
@@ -350,6 +351,63 @@ ep_render (int page, struct task **procs, int nprocs, int total_pages)
                        cnt_zombie, nprocs);
 }
 
+/* per-slot code buffers: each pidN_fn gets copied here by exec_fn before the
+ * task starts running. Page-aligned because the buffer doubles as the code
+ * page; one buffer = one slot, indexed 1..6. */
+#define MAX_TEST_PROCS 6
+static uint8_t proc_code_buf[MAX_TEST_PROCS][PAGE_SIZE]
+    __attribute__ ((aligned (PAGE_SIZE)));
+
+void
+shell_spawnproc (int slot)
+{
+    if (slot < 1 || slot > MAX_TEST_PROCS)
+    {
+        terminal_writestring ("spawnproc: slot must be 1..6\n");
+        return;
+    }
+
+    void (*fn) (void) = NULL;
+    void (*fn_end) (void) = NULL;
+    switch (slot)
+    {
+        case 1:
+            fn = pid1_fn;
+            fn_end = pid1_fn_end;
+            break;
+        case 2:
+            fn = pid2_fn;
+            fn_end = pid2_fn_end;
+            break;
+        case 3:
+            fn = pid3_fn;
+            fn_end = pid3_fn_end;
+            break;
+        case 4:
+            fn = pid4_fn;
+            fn_end = pid4_fn_end;
+            break;
+        case 5:
+            fn = pid5_fn;
+            fn_end = pid5_fn_end;
+            break;
+        case 6:
+            fn = pid6_fn;
+            fn_end = pid6_fn_end;
+            break;
+    }
+
+    uint32_t size = (uint32_t)fn_end - (uint32_t)fn;
+    if (size == 0 || size > PAGE_SIZE)
+    {
+        terminal_writestring ("spawnproc: invalid function size\n");
+        return;
+    }
+
+    exec_fn ((uint32_t *)proc_code_buf[slot - 1], (uint32_t *)fn, size);
+    terminal_writestring ("spawnproc: launched\n");
+}
+
 void
 shell_eyeproc (void)
 {
@@ -555,6 +613,8 @@ shell_help (void)
     terminal_writestring ("  keymap   - qwerty | azerty\n");
     terminal_writestring (
         "  eyeproc  - full-screen process grid (ESC to quit)\n");
+    terminal_writestring (
+        "  spawnproc [N] - launch test process N (1..6), or all if omitted\n");
 }
 
 void
@@ -604,6 +664,20 @@ shell_execute (const char *cmd)
     {
         shell_eyeproc ();
         return;
+    }
+    else if (strcmp (cmd, "spawnproc") == 0)
+    {
+        for (int i = 1; i <= MAX_TEST_PROCS; i++)
+        {
+            shell_spawnproc (i);
+        }
+    }
+    else if (cmd[0] == 's' && cmd[1] == 'p' && cmd[2] == 'a' && cmd[3] == 'w'
+             && cmd[4] == 'n' && cmd[5] == 'p' && cmd[6] == 'r' && cmd[7] == 'o'
+             && cmd[8] == 'c' && cmd[9] == ' ' && cmd[10] >= '0'
+             && cmd[10] <= '9' && cmd[11] == '\0')
+    {
+        shell_spawnproc (cmd[10] - '0');
     }
     else if (cmd[0] != '\0')
     {

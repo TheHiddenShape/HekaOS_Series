@@ -22,7 +22,11 @@ int printk (const char *format, ...);
 #define pr_warn(fmt, ...) printk (KERN_WARNING fmt, ##__VA_ARGS__)
 #define pr_notice(fmt, ...) printk (KERN_NOTICE fmt, ##__VA_ARGS__)
 #define pr_info(fmt, ...) printk (KERN_INFO fmt, ##__VA_ARGS__)
+#ifdef DEBUG
 #define pr_debug(fmt, ...) printk (KERN_DEBUG fmt, ##__VA_ARGS__)
+#else
+#define pr_debug(fmt, ...) (void)0
+#endif
 
 void dmesg (void);
 void console_flush (void);
