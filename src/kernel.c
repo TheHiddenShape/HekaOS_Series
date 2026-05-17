@@ -720,11 +720,100 @@ shell_memdump (void)
     terminal_writestring (" pages used\n");
 }
 
-void
+static void
+shell_momentum (void)
+{
+    struct task *t = current_task;
+    uint32_t live_esp = get_esp ();
+
+    terminal_writestring ("#### current execution context ####\n");
+
+    terminal_writestring ("pid:        ");
+    terminal_write_uint (t->pid);
+    terminal_putchar ('\n');
+
+    if (t->parent)
+    {
+        terminal_writestring ("ppid:       ");
+        terminal_write_uint (t->parent->pid);
+        terminal_putchar ('\n');
+    }
+
+    terminal_writestring ("uid:        ");
+    terminal_write_uint (t->uid);
+    terminal_writestring ("  euid: ");
+    terminal_write_uint (t->euid);
+    terminal_putchar ('\n');
+
+    const char *state_str;
+    switch (t->state)
+    {
+        case TASK_RUNNABLE:
+            state_str = "RUNNABLE";
+            break;
+        case TASK_RUNNING:
+            state_str = "RUNNING";
+            break;
+        case TASK_BLOCKED:
+            state_str = "BLOCKED";
+            break;
+        case TASK_ZOMBIE:
+            state_str = "ZOMBIE";
+            break;
+        default:
+            state_str = "UNKNOWN";
+            break;
+    }
+    terminal_writestring ("state:      ");
+    terminal_writestring (state_str);
+    terminal_putchar ('\n');
+
+    terminal_writestring ("quantum:    ");
+    terminal_write_uint (t->time_left);
+    terminal_writestring (" / ");
+    terminal_write_uint (t->quantum);
+    terminal_writestring (" ticks\n");
+
+    terminal_writestring ("thread.esp: ");
+    terminal_write_hex (t->thread.esp);
+    terminal_putchar ('\n');
+
+    terminal_writestring ("live esp:   ");
+    terminal_write_hex (live_esp);
+    terminal_putchar ('\n');
+
+    terminal_writestring ("thread.tf:  ");
+    if (t->thread.tf)
+    {
+        terminal_write_hex ((uint32_t)t->thread.tf);
+    }
+    else
+    {
+        terminal_writestring ("(null, not preempted)");
+    }
+    terminal_putchar ('\n');
+
+    terminal_writestring ("cr3:        ");
+    terminal_write_hex (t->mm.pgdir);
+    terminal_putchar ('\n');
+
+    terminal_writestring ("code:       ");
+    terminal_write_hex (t->mm.code_start);
+    terminal_writestring (" - ");
+    terminal_write_hex (t->mm.code_end);
+    terminal_putchar ('\n');
+
+    terminal_writestring ("stack_top:  ");
+    terminal_write_hex (t->mm.stack_top);
+    terminal_putchar ('\n');
+}
+
+static void
 shell_help (void)
 {
     terminal_writestring ("available commands:\n");
     terminal_writestring ("  help     - show this help message\n");
+    terminal_writestring ("  momentum - dump current task execution context\n");
     terminal_writestring ("  dmesg    - display kernel ring buffer\n");
     terminal_writestring ("  memdump  - display memory usage summary\n");
     terminal_writestring ("  reboot   - reboot the system\n");
@@ -762,6 +851,10 @@ shell_execute (const char *cmd)
     else if (strcmp (cmd, "help") == 0)
     {
         shell_help ();
+    }
+    else if (strcmp (cmd, "momentum") == 0)
+    {
+        shell_momentum ();
     }
     else if (strcmp (cmd, "dmesg") == 0)
     {
